@@ -1,7 +1,8 @@
 # branch
 Accounting system for catering
 
-We use 
+We use
+
 -React for Frontend
 
 -Django for Backend
