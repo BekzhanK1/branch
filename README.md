@@ -8,3 +8,5 @@ We use
 -Django for Backend
 
 -Postgres for Database
+
+-For start use sqlite3 db (P.S. Aimurat)
