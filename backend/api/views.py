@@ -15,8 +15,8 @@ from account.serializers import UserSerializer
 # Create your views here.
 
 class LoginView(APIView):
-    permission_classes = (permissions.AllowAny, )
-    
+    permission_classes = (permissions.AllowAny,)
+
     def get_tokens_for_user(self, user):
         refresh = RefreshToken.for_user(user)
 
@@ -25,34 +25,34 @@ class LoginView(APIView):
             'access': str(refresh.access_token),
             'user': UserSerializer(user).data
         }
-        
+
     def post(self, request):
-        
+
         data = request.data
-        
+
         if "email" not in data.keys():
             return Response({
                 "error": "Email is required"
-            }, status= status.HTTP_400_BAD_REQUEST)
-            
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         if "password" not in data.keys():
             return Response({
                 "error": "Password is required"
-            }, status= status.HTTP_400_BAD_REQUEST)
-            
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         email = data['email']
         password = data['password']
-        
+
         user = authenticate(email=email, password=password)
-        
+
         if user is not None:
             user_id = User.objects.get(email=email)
             data = self.get_tokens_for_user(user_id)
-            return Response(data, status = status.HTTP_200_OK)
+            return Response(data, status=status.HTTP_200_OK)
         else:
             return Response({
                 "error": "User does not exist"
-            }, status= status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserRegistrationView(APIView):
@@ -62,9 +62,7 @@ class UserRegistrationView(APIView):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            return Response({"new_id": user.id,
-                             "email": user.email,
-                             "password": user.password}, status=status.HTTP_201_CREATED)
+            return Response({"new_id": user.id}, status=status.HTTP_201_CREATED)
 
         # Creating dict with errors, keys are field names, values are error messages
         errors = {}
@@ -72,4 +70,3 @@ class UserRegistrationView(APIView):
             errors[field] = error_detail[0]
 
         return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
-            
