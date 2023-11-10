@@ -14,17 +14,18 @@ from account.serializers import UserSerializer
 
 # Create your views here.
 
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+        'user': UserSerializer(user).data
+    }
+
+
 class LoginView(APIView):
     permission_classes = (permissions.AllowAny,)
-
-    def get_tokens_for_user(self, user):
-        refresh = RefreshToken.for_user(user)
-
-        return {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token),
-            'user': UserSerializer(user).data
-        }
 
     def post(self, request):
 
@@ -47,7 +48,7 @@ class LoginView(APIView):
 
         if user is not None:
             user_id = User.objects.get(email=email)
-            data = self.get_tokens_for_user(user_id)
+            data = get_tokens_for_user(user_id)
             return Response(data, status=status.HTTP_200_OK)
         else:
             return Response({
@@ -62,7 +63,8 @@ class UserRegistrationView(APIView):
         serializer = UserRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            return Response({"new_id": user.id}, status=status.HTTP_201_CREATED)
+            data = get_tokens_for_user(user)
+            return Response(data, status=status.HTTP_201_CREATED)
 
         # Creating dict with errors, keys are field names, values are error messages
         errors = {}
