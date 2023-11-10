@@ -1,0 +1,17 @@
+# Ignore venv
+venv/
+
+# Ignore IDE files
+.vscode/
+.idea/
+
+# Ignore compiled files
+*.pyc
+*.class
+
+# Ignore local environment files
+.env
+
+# Ignore OS-generated files
+.DS_Store
+Thumbs.db

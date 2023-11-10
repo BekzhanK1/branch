@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from django.contrib.auth.hashers import make_password
 
 # Create your models here.
 
@@ -17,7 +18,7 @@ class UserManager(BaseUserManager):
             phonenumber = phonenumber
         )
         
-        user.set_password(password)
+        user.set_password(make_password(password))
         user.save(using = self._db)
         return user
     

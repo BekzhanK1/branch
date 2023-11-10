@@ -5,6 +5,8 @@ from rest_framework import permissions, status
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate, get_user_model
 
+from account.serializers import UserRegistrationSerializer
+
 User = get_user_model()
 
 from account.serializers import UserSerializer
@@ -51,4 +53,23 @@ class LoginView(APIView):
             return Response({
                 "error": "User does not exist"
             }, status= status.HTTP_400_BAD_REQUEST)
+
+
+class UserRegistrationView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        serializer = UserRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response({"new_id": user.id,
+                             "email": user.email,
+                             "password": user.password}, status=status.HTTP_201_CREATED)
+
+        # Creating dict with errors, keys are field names, values are error messages
+        errors = {}
+        for field, error_detail in serializer.errors.items():
+            errors[field] = error_detail[0]
+
+        return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
             
