@@ -6,10 +6,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate, get_user_model
 
 from account.serializers import UserRegistrationSerializer
+import uuid
 
 User = get_user_model()
 
-from account.serializers import UserSerializer
+from account.serializers import *
 
 
 # Create your views here.
@@ -23,6 +24,8 @@ def get_tokens_for_user(user):
         'user': UserSerializer(user).data
     }
 
+def generate_password():
+    return uuid.uuid4().hex[:10]
 
 class LoginView(APIView):
     permission_classes = (permissions.AllowAny,)
@@ -55,15 +58,49 @@ class LoginView(APIView):
                 "error": "User does not exist"
             }, status=status.HTTP_400_BAD_REQUEST)
 
+# class UserRegistrationView(APIView):
+#     # permission_classes = (permissions.AllowAny,)
 
-class UserRegistrationView(APIView):
-    permission_classes = (permissions.AllowAny,)
+#     def post(self, request):
+#         serializer = UserRegistrationSerializer(data=request.data)
+#         if serializer.is_valid():
+#             user = serializer.save()
+#             data = get_tokens_for_user(user)
+#             return Response(data, status=status.HTTP_201_CREATED)
+
+#         # Creating dict with errors, keys are field names, values are error messages
+#         errors = {}
+#         for field, error_detail in serializer.errors.items():
+#             errors[field] = error_detail[0]
+
+#         return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminRegistrationView(APIView):
+    # permission_classes = (permissions.AllowAny,)
 
     def post(self, request):
-        serializer = UserRegistrationSerializer(data=request.data)
+        
+        user = request.user
+        
+        if not user.is_superadmin:
+            return Response(
+                    {'error': "You don't have a permission"},
+                    status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # password = 
+        # request.data['password'] = generate_password()
+        
+        serializer = AdminRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             data = get_tokens_for_user(user)
+            
+            response_dict = {}
+            response_dict['user'] = UserSerializer(user)
+            response_dict.update(data)
+            
             return Response(data, status=status.HTTP_201_CREATED)
 
         # Creating dict with errors, keys are field names, values are error messages

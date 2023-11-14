@@ -22,25 +22,51 @@ class UserManager(BaseUserManager):
         user.save(using = self._db)
         return user
     
-    # def create_admin(self, email, first_name, last_name, phonenumber, password = None):
-    #     user = self.create_user(email, first_name, last_name, phonenumber, password)
-        
-    #     # user.is_superuser = True
-    #     # user.is_staff = True    
-    #     user.is_admin = True    
-    #     user.save(using = self._db)
-        
-    #     return user
-        
+    #superadmin@gmail.com qwerty
     def create_superuser(self, email, first_name, last_name, phonenumber, password = None):
         user = self.create_user(email, first_name, last_name, phonenumber, password)
         
-        user.is_superuser = True
+        
         user.is_staff = True
+        user.is_superuser = True
+        user.is_superadmin = True
         
         user.save(using = self._db)
         
         return user
+    
+    def create_superadmin(self, email, first_name, last_name, phonenumber, password = None):
+        user = self.create_user(email, first_name, last_name, phonenumber, password)
+        
+        user.is_staff = True
+        user.is_superuser = True
+        user.is_superadmin = True
+        
+        user.save(using = self._db)
+        
+        return user
+    
+    def create_admin(self, email, first_name, last_name, phonenumber, password = None):
+        user = self.create_user(email, first_name, last_name, phonenumber, password)
+        
+        # user.is_superuser = True
+        # user.is_staff = True    
+        user.is_admin = True    
+        user.save(using = self._db)
+        
+        return user
+    
+    def create_employee(self, email, first_name, last_name, phonenumber, password = None):
+        user = self.create_user(email, first_name, last_name, phonenumber, password)
+        
+        # user.is_superuser = True
+        # user.is_staff = True    
+        user.is_employee = True    
+        user.save(using = self._db)
+        
+        return user
+        
+
 
 class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=255, unique=True)
@@ -50,7 +76,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     
     is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
+    is_staff= models.BooleanField(default=True)
+    
+    is_superadmin = models.BooleanField(default=True)
+    
+    is_admin = models.BooleanField(default=True)
+    
+    is_employee = models.BooleanField(default=False)
     
     objects = UserManager()
     

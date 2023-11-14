@@ -22,7 +22,9 @@ from .views import *
 urlpatterns = [
     
     path('login', LoginView.as_view()),
-    path('register', UserRegistrationView.as_view()),
+    path('register-admin', AdminRegistrationView.as_view()),
+    
+    # path('register', UserRegistrationView.as_view()),
     path('token/', TokenObtainPairView.as_view()),
     path('token/refresh/', TokenRefreshView.as_view()),
     path('token/verify/', TokenVerifyView.as_view()),
