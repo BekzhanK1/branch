@@ -81,7 +81,7 @@ class LoginView(APIView):
 
 
 class AdminRegistrationView(APIView):
-    # permission_classes = (permissions.AllowAny,)
+    permission_classes = (permissions.AllowAny,)
 
     def post(self, request):
         
