@@ -23,6 +23,7 @@ urlpatterns = [
     
     path('login', LoginView.as_view()),
     path('register-admin', AdminRegistrationView.as_view()),
+    path('register-employee', EmployeeRegistrationView.as_view()),
     
     # path('register', UserRegistrationView.as_view()),
     path('token/', TokenObtainPairView.as_view()),

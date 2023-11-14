@@ -15,13 +15,17 @@ from account.serializers import *
 
 # Create your views here.
 
-def get_tokens_for_user(user):
+def get_tokens_for_user(user, password = None):
     refresh = RefreshToken.for_user(user)
+    
+    user = UserSerializer(user).data
+    if password is not None:
+        user['password'] = password
 
     return {
         'refresh': str(refresh),
         'access': str(refresh.access_token),
-        'user': UserSerializer(user).data
+        'user': user
     }
 
 def generate_password():
@@ -100,6 +104,38 @@ class AdminRegistrationView(APIView):
             response_dict = {}
             response_dict['user'] = UserSerializer(user)
             response_dict.update(data)
+            
+            return Response(data, status=status.HTTP_201_CREATED)
+
+        # Creating dict with errors, keys are field names, values are error messages
+        errors = {}
+        for field, error_detail in serializer.errors.items():
+            errors[field] = error_detail[0]
+
+        return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EmployeeRegistrationView(APIView):
+    # permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        
+        user = request.user
+        
+        if not user.is_superadmin or not user.is_admin:
+            return Response(
+                    {'error': "You don't have a permission"},
+                    status=status.HTTP_403_FORBIDDEN
+            )
+        
+        password_generated = generate_password()
+        request.data['password'] = password_generated
+        
+        serializer = EmployeeRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            data = get_tokens_for_user(user, password_generated)
+            
             
             return Response(data, status=status.HTTP_201_CREATED)
 
