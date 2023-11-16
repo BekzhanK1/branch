@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from rest_framework import permissions, status
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate, get_user_model
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import get_template
 
 from account.serializers import UserRegistrationSerializer
 import uuid
@@ -50,8 +52,7 @@ class LoginView(APIView):
 
         email = data['email']
         password = data['password']
-
-        user = authenticate(email=email, password=password)
+        user = authenticate(request, email=email, password=password)
 
         if user is not None:
             user_id = User.objects.get(email=email)
@@ -79,6 +80,16 @@ class LoginView(APIView):
 
 #         return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
 
+# Sending email function: 
+
+def send_email(data, user):
+    htmly = get_template('.html') # I need html file. 
+    e = {'email': user.email}
+    subject, from_email, to = 'Confirmation of registration', '@gmail.com', user.email #There should be some gmail, from who we are sending the message
+    html_content = htmly.render(e)
+    msg = EmailMultiAlternatives(subject, html_content, from_email, [to])
+    msg.attach_alternative(html_content, "text/html")
+    msg.send()
 
 class AdminRegistrationView(APIView):
     permission_classes = (permissions.AllowAny,)
@@ -100,11 +111,11 @@ class AdminRegistrationView(APIView):
         if serializer.is_valid():
             user = serializer.save()
             data = get_tokens_for_user(user)
-            
+
+            send_email(data= data, user = user)
             response_dict = {}
             response_dict['user'] = UserSerializer(user)
             response_dict.update(data)
-            
             return Response(data, status=status.HTTP_201_CREATED)
 
         # Creating dict with errors, keys are field names, values are error messages
@@ -136,7 +147,10 @@ class EmployeeRegistrationView(APIView):
             user = serializer.save()
             data = get_tokens_for_user(user, password_generated)
             
-            
+            send_email(data= data, user = user)
+            response_dict = {}
+            response_dict['user'] = UserSerializer(user)
+            response_dict.update(data)
             return Response(data, status=status.HTTP_201_CREATED)
 
         # Creating dict with errors, keys are field names, values are error messages
