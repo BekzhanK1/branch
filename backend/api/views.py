@@ -82,14 +82,18 @@ class LoginView(APIView):
 
 # Sending email function: 
 
-def send_email(data, user):
-    htmly = get_template('.html') # I need html file. 
-    e = {'email': user.email}
-    subject, from_email, to = 'Confirmation of registration', '@gmail.com', user.email #There should be some gmail, from who we are sending the message
-    html_content = htmly.render(e)
-    msg = EmailMultiAlternatives(subject, html_content, from_email, [to])
-    msg.attach_alternative(html_content, "text/html")
-    msg.send()
+# def send_email(data, user):
+#     htmly = get_template('.html') # I need html file.
+#     e = {'email': user.email}
+#     subject, from_email, to = 'Confirmation of registration', '@gmail.com', user.email #There should be some gmail, from who we are sending the message
+#     html_content = htmly.render(e)
+#     msg = EmailMultiAlternatives(subject, html_content, from_email, [to])
+#     msg.attach_alternative(html_content, "text/html")
+#     msg.send()
+
+def activateEmail(request, user, email):
+    pass
+
 
 class AdminRegistrationView(APIView):
     permission_classes = (permissions.AllowAny,)
@@ -109,10 +113,13 @@ class AdminRegistrationView(APIView):
         
         serializer = AdminRegistrationSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
+            user = serializer.save(commit = False)
+            user.is_active = False
+            user.save()
+            activateEmail(request, user, user.email)
             data = get_tokens_for_user(user)
 
-            send_email(data= data, user = user)
+            # send_email(data= data, user = user)
             response_dict = {}
             response_dict['user'] = UserSerializer(user)
             response_dict.update(data)
@@ -147,7 +154,7 @@ class EmployeeRegistrationView(APIView):
             user = serializer.save()
             data = get_tokens_for_user(user, password_generated)
             
-            send_email(data= data, user = user)
+            # send_email(data= data, user = user)
             response_dict = {}
             response_dict['user'] = UserSerializer(user)
             response_dict.update(data)
