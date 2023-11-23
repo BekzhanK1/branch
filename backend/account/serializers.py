@@ -8,6 +8,20 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = "__all__"
+        
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        
+        if instance.is_admin:
+            role = "admin"
+        elif instance.is_employee:
+            role = "employee"
+        elif instance.is_superadmin:
+            role = "superadmin"
+            
+        representation['role'] = role
+
+        return representation
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):

@@ -85,16 +85,18 @@ class AdminRegistrationView(APIView):
 
     def post(self, request):
         
-        user = request.user
+        # user = request.user
         
-        if not user.is_superadmin:
-            return Response(
-                    {'error': "You don't have a permission"},
-                    status=status.HTTP_403_FORBIDDEN
-            )
+        # if not user.is_superadmin:
+        #     return Response(
+        #             {'error': "You don't have a permission"},
+        #             status=status.HTTP_403_FORBIDDEN
+        #     )
         
         # password = 
         # request.data['password'] = generate_password()
+        
+        print("Working")
         
         serializer = AdminRegistrationSerializer(data=request.data)
         if serializer.is_valid():
