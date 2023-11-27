@@ -1,22 +1,18 @@
-from account.serializers import *
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from readline import get_current_history_length
-from django.shortcuts import render
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import permissions, status
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import authenticate, get_user_model
-from django.core.mail import EmailMultiAlternatives, EmailMessage
-from django.template.loader import get_template
-from django.contrib import messages
-from django.utils.encoding import force_bytes, force_str
-from django.template.loader import render_to_string
-
-
-from account.serializers import UserRegistrationSerializer
 import uuid
 
+from django.contrib import messages
+from django.contrib.auth import authenticate, get_user_model
+from django.core.mail import EmailMessage
+from django.shortcuts import render
+from django.template.loader import render_to_string, get_template
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from rest_framework import permissions, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from account.serializers import *
 from .tokens import account_activation_token
 
 User = get_user_model()
@@ -62,7 +58,6 @@ class LoginView(APIView):
         email = data['email']
         password = data['password']
         user = authenticate(request, email=email, password=password)
-
         if user is not None:
             user_id = User.objects.get(email=email)
             data = get_tokens_for_user(user_id)
@@ -71,6 +66,7 @@ class LoginView(APIView):
             return Response({
                 "error": "User does not exist"
             }, status=status.HTTP_400_BAD_REQUEST)
+
 
 # class UserRegistrationView(APIView):
 #     # permission_classes = (permissions.AllowAny,)
@@ -102,16 +98,14 @@ class LoginView(APIView):
 
 
 def activate(request, uidb64, token):
-
     User = get_user_model()
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
         print('Here')
-        
+
     except:
         user = None
-    
 
     if user is not None and account_activation_token.check_token(user, token):
         user.is_active = True
@@ -157,9 +151,6 @@ class AdminRegistrationView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # password =
-        # request.data['password'] = generate_password()
-
         serializer = AdminRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
@@ -182,13 +173,30 @@ class AdminRegistrationView(APIView):
         return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
+def send_credentials_to_employee(user_email, first_name, password):
+    template = get_template('registration_email.html')
+
+    context = {
+        'first_name': first_name,
+        'password': password,
+    }
+    html_content = template.render(context)
+
+    email = EmailMessage(
+        "brunch.kz registration complete",
+        html_content,
+        to=[user_email]
+    )
+    email.content_subtype = "html"
+    email.send()
+
+
 class EmployeeRegistrationView(APIView):
     # permission_classes = (permissions.AllowAny,)
 
     def post(self, request):
 
         user = request.user
-
         if not user.is_superadmin or not user.is_admin:
             return Response(
                 {'error': "You don't have a permission"},
@@ -203,7 +211,7 @@ class EmployeeRegistrationView(APIView):
             user = serializer.save()
             data = get_tokens_for_user(user, password_generated)
 
-            # send_email(data= data, user = user)
+            send_credentials_to_employee(user.email, user.first_name, password_generated)
             response_dict = {}
             response_dict['user'] = UserSerializer(user)
             response_dict.update(data)
