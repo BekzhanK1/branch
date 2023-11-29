@@ -1,18 +1,17 @@
+import uuid
 from django.contrib.auth import authenticate, get_user_model
-from django.core.mail import EmailMessage
-from django.template.loader import get_template
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.utils.encoding import force_bytes, force_str
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
 from api.tokens import account_activation_token
 
 
 
 from account.serializers import *
-from utils import generate_password, send_email
+from utils import send_email
 
 User = get_user_model()
 
@@ -95,13 +94,13 @@ class AdminRegistrationView(APIView):
 
     def post(self, request):
 
-        user = request.user
+        # user = request.user
 
-        if not user.is_superadmin:
-            return Response(
-                {'error': "You don't have a permission"},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        # if not user.is_superadmin:
+        #     return Response(
+        #         {'error': "You don't have a permission"},
+        #         status=status.HTTP_403_FORBIDDEN
+        #     )
 
         serializer = AdminRegistrationSerializer(data=request.data)
         if serializer.is_valid():
@@ -120,7 +119,8 @@ class AdminRegistrationView(APIView):
 
         return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
 
-
+def generate_password():
+    return uuid.uuid4().hex[:10]
 
 class EmployeeRegistrationView(APIView):
     # permission_classes = (permissions.AllowAny,)
@@ -128,29 +128,36 @@ class EmployeeRegistrationView(APIView):
     def post(self, request):
 
         user = request.user
-        if not user.is_superadmin or not user.is_admin:
+        # if not user.is_superadmin or not user.is_admin:
+        # if not user.is_superadmin or not user.is_admin:
+        #     return Response(
+        #         {'error': "You don't have a permission"},
+        #         status=status.HTTP_403_FORBIDDEN
+        #     )
+
+        if user.is_superadmin or user.is_admin:
+            password_generated = generate_password()
+            # print(password_generated)
+            request.data['password'] = password_generated
+
+            serializer = EmployeeRegistrationSerializer(data=request.data)
+            if serializer.is_valid():
+                user = serializer.save()
+                data = get_tokens_for_user(user, password_generated)
+
+                send_email.send_credentials_to_employee(user.email, user.first_name, password_generated, "registration_email.html")
+                response_dict = {'user': UserSerializer(user)}
+                response_dict.update(data)
+                return Response(data, status=status.HTTP_201_CREATED)
+
+            # Creating dict with errors, keys are field names, values are error messages
+            errors = {}
+            for field, error_detail in serializer.errors.items():
+                errors[field] = error_detail[0]
+
+            return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
+        else:
             return Response(
                 {'error': "You don't have a permission"},
                 status=status.HTTP_403_FORBIDDEN
             )
-
-        password_generated = generate_password()
-        request.data['password'] = password_generated
-
-        serializer = EmployeeRegistrationSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            data = get_tokens_for_user(user, password_generated)
-
-            send_email.send_credentials_to_employee(user.email, user.first_name, password_generated)
-            response_dict = {'user': UserSerializer(user)}
-            response_dict.update(data)
-            return Response(data, status=status.HTTP_201_CREATED)
-
-        # Creating dict with errors, keys are field names, values are error messages
-        errors = {}
-        for field, error_detail in serializer.errors.items():
-            errors[field] = error_detail[0]
-
-        return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
-    

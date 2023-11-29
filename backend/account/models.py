@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
-from django.contrib.auth.hashers import make_password
 
 # Create your models here.
 
@@ -61,7 +60,8 @@ class UserManager(BaseUserManager):
         
         # user.is_superuser = True
         # user.is_staff = True    
-        user.is_employee = True    
+        user.is_employee = True 
+        user.is_active = True   
         user.save(using = self._db)
         
         return user

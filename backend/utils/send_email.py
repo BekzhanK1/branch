@@ -1,14 +1,13 @@
 from django.contrib import messages
-from django.contrib.auth import  get_user_model
 from django.core.mail import EmailMessage
-from django.shortcuts import render
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.http import urlsafe_base64_encode
+from django.template.loader import get_template
+
 
 from account.serializers import *
 from api.tokens import account_activation_token
-from backend.utils import generate_password, send_email
 
 
 def activateEmail(request, user, to_email):
@@ -28,3 +27,19 @@ def activateEmail(request, user, to_email):
         messages.error(
             request, f'Problem sending email to {to_email}, check if you typed it correctly.')
 
+def send_credentials_to_employee(user_email, first_name, password, template):
+    template = get_template(template)
+
+    context = {
+        'first_name': first_name,
+        'password': password,
+    }
+    html_content = template.render(context)
+
+    email = EmailMessage(
+        "brunch.kz registration complete",
+        html_content,
+        to=[user_email]
+    )
+    email.content_subtype = "html"
+    email.send()
