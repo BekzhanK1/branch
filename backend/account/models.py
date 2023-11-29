@@ -75,12 +75,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     phonenumber = models.CharField(max_length=20, default = "+77777777777")
     
     
-    is_active = models.BooleanField(default=True)
-    is_staff= models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
+    is_staff= models.BooleanField(default=False)
     
-    is_superadmin = models.BooleanField(default=True)
+    is_superadmin = models.BooleanField(default=False)
     
-    is_admin = models.BooleanField(default=True)
+    is_admin = models.BooleanField(default=False)
     
     is_employee = models.BooleanField(default=False)
     

@@ -64,65 +64,39 @@ class LoginView(APIView):
             return Response(data, status=status.HTTP_200_OK)
         else:
             return Response({
-                "error": "User does not exist"
+                "error": "User does not exist or activation required"
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
-# class UserRegistrationView(APIView):
-#     # permission_classes = (permissions.AllowAny,)
+class ActivateClass(APIView):
+    permission_classes = (permissions.AllowAny,)
 
-#     def post(self, request):
-#         serializer = UserRegistrationSerializer(data=request.data)
-#         if serializer.is_valid():
-#             user = serializer.save()
-#             data = get_tokens_for_user(user)
-#             return Response(data, status=status.HTTP_201_CREATED)
+    def get(self, request, uidb64, token):
+        User = get_user_model()
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+            print('Here')
 
-#         # Creating dict with errors, keys are field names, values are error messages
-#         errors = {}
-#         for field, error_detail in serializer.errors.items():
-#             errors[field] = error_detail[0]
+        except:
+            user = None
 
-#         return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
+        if user is not None and account_activation_token.check_token(user, token):
+            user.is_active = True
+            user.save()
 
-# Sending email function:
+            # messages.success(
+            #     request, "Thank you for your email confirmation. Now you can login your account.")
+            return Response({"success": "successfully activated account"}, status=status.HTTP_200_OK)
+        # else:
+        #     messages.error(request, "Activation link is invalid!")
 
-# def send_email(data, user):
-#     htmly = get_template('.html') # I need html file.
-#     e = {'email': user.email}
-#     subject, from_email, to = 'Confirmation of registration', '@gmail.com', user.email #There should be some gmail, from who we are sending the message
-#     html_content = htmly.render(e)
-#     msg = EmailMultiAlternatives(subject, html_content, from_email, [to])
-#     msg.attach_alternative(html_content, "text/html")
-#     msg.send()
-
-
-def activate(request, uidb64, token):
-    User = get_user_model()
-    try:
-        uid = force_str(urlsafe_base64_decode(uidb64))
-        user = User.objects.get(pk=uid)
-        print('Here')
-
-    except:
-        user = None
-
-    if user is not None and account_activation_token.check_token(user, token):
-        user.is_active = True
-        user.save()
-
-        # messages.success(
-        #     request, "Thank you for your email confirmation. Now you can login your account.")
-        return render(request, 'login.html')
-    # else:
-    #     messages.error(request, "Activation link is invalid!")
-
-    return render(request, 'login.html')
+        return Response({"error": "couldn't activate account"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 def activateEmail(request, user, to_email):
     mail_subject = "Activate your user account."
-    message = render_to_string("../templates/template_activate_account.html", {
+    message = render_to_string("template_activate_account.html", {
         'user': user.first_name + " " + user.last_name,
         'domain': "localhost:8000",
         'uid': urlsafe_base64_encode(force_bytes(user.pk)),
@@ -131,11 +105,9 @@ def activateEmail(request, user, to_email):
     })
     email = EmailMessage(mail_subject, message, to=[to_email])
     if email.send():
-        messages.success(request, f'Dear <b>{user}</b>, please go to you email <b>{to_email}</b> inbox and click on \
-                received activation link to confirm and complete the registration. <b>Note:</b> Check your spam folder.')
+        return Response({"success": f"successfully sent email to {to_email}"}, status=status.HTTP_200_OK)
     else:
-        messages.error(
-            request, f'Problem sending email to {to_email}, check if you typed it correctly.')
+        return Response({"error": f"problem sending email to {to_email}"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AdminRegistrationView(APIView):
@@ -154,14 +126,10 @@ class AdminRegistrationView(APIView):
         serializer = AdminRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            user.is_active = False
             user.save()
             activateEmail(request, user, user.email)
             data = get_tokens_for_user(user)
-
-            # send_email(data= data, user = user)
-            response_dict = {}
-            response_dict['user'] = UserSerializer(user)
+            response_dict = {'user': UserSerializer(user)}
             response_dict.update(data)
             return Response(data, status=status.HTTP_201_CREATED)
 
@@ -212,8 +180,7 @@ class EmployeeRegistrationView(APIView):
             data = get_tokens_for_user(user, password_generated)
 
             send_credentials_to_employee(user.email, user.first_name, password_generated)
-            response_dict = {}
-            response_dict['user'] = UserSerializer(user)
+            response_dict = {'user': UserSerializer(user)}
             response_dict.update(data)
             return Response(data, status=status.HTTP_201_CREATED)
 
