@@ -5,6 +5,11 @@ from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from api.tokens import account_activation_token
+
+
 
 from account.serializers import *
 from utils import generate_password, send_email
@@ -84,21 +89,6 @@ class ActivateClass(APIView):
         return Response({"error": "couldn't activate account"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-def activateEmail(request, user, to_email):
-    mail_subject = "Activate your user account."
-    message = render_to_string("template_activate_account.html", {
-        'user': user.first_name + " " + user.last_name,
-        'domain': "localhost:8000",
-        'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-        'token': account_activation_token.make_token(user),
-        "protocol": 'https' if request.is_secure() else 'http'
-    })
-    email = EmailMessage(mail_subject, message, to=[to_email])
-    if email.send():
-        return Response({"success": f"successfully sent email to {to_email}"}, status=status.HTTP_200_OK)
-    else:
-        return Response({"error": f"problem sending email to {to_email}"}, status=status.HTTP_400_BAD_REQUEST)
-
 
 class AdminRegistrationView(APIView):
     permission_classes = (permissions.AllowAny,)
@@ -131,23 +121,6 @@ class AdminRegistrationView(APIView):
         return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-def send_credentials_to_employee(user_email, first_name, password):
-    template = get_template('registration_email.html')
-
-    context = {
-        'first_name': first_name,
-        'password': password,
-    }
-    html_content = template.render(context)
-
-    email = EmailMessage(
-        "brunch.kz registration complete",
-        html_content,
-        to=[user_email]
-    )
-    email.content_subtype = "html"
-    email.send()
-
 
 class EmployeeRegistrationView(APIView):
     # permission_classes = (permissions.AllowAny,)
@@ -169,7 +142,7 @@ class EmployeeRegistrationView(APIView):
             user = serializer.save()
             data = get_tokens_for_user(user, password_generated)
 
-            send_credentials_to_employee(user.email, user.first_name, password_generated)
+            send_email.send_credentials_to_employee(user.email, user.first_name, password_generated)
             response_dict = {'user': UserSerializer(user)}
             response_dict.update(data)
             return Response(data, status=status.HTTP_201_CREATED)
