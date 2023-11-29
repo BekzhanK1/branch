@@ -26,7 +26,7 @@ urlpatterns = [
     path('login', LoginView.as_view()),
     path('register-admin', AdminRegistrationView.as_view()),
     path('register-employee', EmployeeRegistrationView.as_view()),
-    path('activate/<uidb64>/<token>', send_email.activate, name='activate'), 
+    path('activate/<uidb64>/<token>', ActivateClass.as_view(), name ="activate"),
     
     # path('register', UserRegistrationView.as_view()),
     path('token/', TokenObtainPairView.as_view()),

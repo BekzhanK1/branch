@@ -1,10 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-<h1>Activate account</h1>
-</body>
-</html>
+{% autoescape off %}
+Hi {{ user.first_name }},
+
+Please click on the link below to confirm your registration:
+
+{{ protocol }}://{{ domain }}{% url 'activate' uidb64=uid token=token %}
+{% endautoescape %}

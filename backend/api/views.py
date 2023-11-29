@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from account.serializers import *
-from backend.utils import generate_password, send_email
+from utils import generate_password, send_email
 
 User = get_user_model()
 
@@ -54,9 +54,50 @@ class LoginView(APIView):
             return Response(data, status=status.HTTP_200_OK)
         else:
             return Response({
-                "error": "User does not exist"
+                "error": "User does not exist or activation required"
             }, status=status.HTTP_400_BAD_REQUEST)
 
+
+class ActivateClass(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def get(self, request, uidb64, token):
+        User = get_user_model()
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+            print('Here')
+
+        except:
+            user = None
+
+        if user is not None and account_activation_token.check_token(user, token):
+            user.is_active = True
+            user.save()
+
+            # messages.success(
+            #     request, "Thank you for your email confirmation. Now you can login your account.")
+            return Response({"success": "successfully activated account"}, status=status.HTTP_200_OK)
+        # else:
+        #     messages.error(request, "Activation link is invalid!")
+
+        return Response({"error": "couldn't activate account"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+def activateEmail(request, user, to_email):
+    mail_subject = "Activate your user account."
+    message = render_to_string("template_activate_account.html", {
+        'user': user.first_name + " " + user.last_name,
+        'domain': "localhost:8000",
+        'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+        'token': account_activation_token.make_token(user),
+        "protocol": 'https' if request.is_secure() else 'http'
+    })
+    email = EmailMessage(mail_subject, message, to=[to_email])
+    if email.send():
+        return Response({"success": f"successfully sent email to {to_email}"}, status=status.HTTP_200_OK)
+    else:
+        return Response({"error": f"problem sending email to {to_email}"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AdminRegistrationView(APIView):
@@ -75,14 +116,10 @@ class AdminRegistrationView(APIView):
         serializer = AdminRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            user.is_active = False
             user.save()
             send_email.activateEmail(request, user, user.email)
             data = get_tokens_for_user(user)
-
-            # send_email(data= data, user = user)
-            response_dict = {}
-            response_dict['user'] = UserSerializer(user)
+            response_dict = {'user': UserSerializer(user)}
             response_dict.update(data)
             return Response(data, status=status.HTTP_201_CREATED)
 
@@ -133,8 +170,7 @@ class EmployeeRegistrationView(APIView):
             data = get_tokens_for_user(user, password_generated)
 
             send_credentials_to_employee(user.email, user.first_name, password_generated)
-            response_dict = {}
-            response_dict['user'] = UserSerializer(user)
+            response_dict = {'user': UserSerializer(user)}
             response_dict.update(data)
             return Response(data, status=status.HTTP_201_CREATED)
 
