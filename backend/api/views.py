@@ -14,6 +14,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from account.serializers import *
 from .tokens import account_activation_token
+from backend.utils import generate_password
 
 User = get_user_model()
 
@@ -32,10 +33,6 @@ def get_tokens_for_user(user, password=None):
         'access': str(refresh.access_token),
         'user': user
     }
-
-
-def generate_password():
-    return uuid.uuid4().hex[:10]
 
 
 class LoginView(APIView):
@@ -223,3 +220,4 @@ class EmployeeRegistrationView(APIView):
             errors[field] = error_detail[0]
 
         return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
+    
