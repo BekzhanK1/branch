@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'account',
     'myproject',
     'api',
+    'company',
+    'warehouse'
 ]
 
 MIDDLEWARE = [
