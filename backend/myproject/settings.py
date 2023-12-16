@@ -17,7 +17,6 @@ from datetime import timedelta
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
@@ -43,7 +42,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'account',
     'myproject',
-    'api'
+    'api',
 ]
 
 MIDDLEWARE = [
@@ -65,7 +64,7 @@ CORS_ALLOW_CREDENTIALS = True
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, 'templates')],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -137,11 +136,19 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication'
-    ]
+    ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        # Add other renderers if needed
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        # Add other parsers if needed
+    ],
 }
 
 SIMPLE_JWT = {
-    'ACCES_TOKEN_LIFETIME': timedelta(hours = 2),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours = 2),
     'REFRESH_TOKEN_LIFETIME': timedelta(days = 1),
     'ROTATE_REFRESH_TOKENS': False,
     'BLACKLIST_AFTER_ROTATION': False,
@@ -155,3 +162,12 @@ SIMPLE_JWT = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = 'account.User'
+
+# Emailing settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_FROM = 'branch.astana@gmail.com'
+EMAIL_HOST_USER = 'branch.astana@gmail.com'
+EMAIL_HOST_PASSWORD = 'bgan ysjy tgsf fhmy'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
