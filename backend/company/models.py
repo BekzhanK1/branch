@@ -19,6 +19,9 @@ class Company(models.Model):
     type = models.CharField(max_length = 50, choices = CompanyType.choices)
     
     company_owner = models.ForeignKey(User, on_delete = models.CASCADE, related_name = "owned_company")
+
+    def __str__(self):
+        return self.name
     
 class Catalog(models.Model):
     name = models.CharField(max_length = 255)
@@ -26,6 +29,9 @@ class Catalog(models.Model):
     brand = models.CharField(max_length = 255)
     
     company = models.ForeignKey(Company, on_delete = models.CASCADE, related_name = "catalog")
+
+    def __str__(self):
+        return self.name
     
 class Product(models.Model):
     name = models.CharField(max_length = 255)
@@ -35,4 +41,7 @@ class Product(models.Model):
     
     catalog = models.ForeignKey(Catalog, on_delete = models.CASCADE, related_name = "product")
     company = models.ForeignKey(Company, on_delete = models.CASCADE, related_name = "product")
+
+    def __str__(self):
+        return self.name
     
