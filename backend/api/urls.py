@@ -1,5 +1,7 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
+
+from warehouse.views import WarehouseProductListCreateView, WarehouseSummaryView
 from .views import *
 from account import views
 
@@ -15,5 +17,8 @@ urlpatterns = [
 
     path('reset_password', views.EmployeeResetPasswordView.as_view()),
     path('reset_password_admin', views.AdminResetPasswordView.as_view()),
-    path('reset/<uidb64>/<token>', SetNewPasswordAdmin.as_view(), name="reset")
+    path('reset/<uidb64>/<token>', SetNewPasswordAdmin.as_view(), name="reset"),
+
+    path('warehouse/products/', WarehouseProductListCreateView.as_view(), name='warehouse-product-list-create'),
+    path('warehouse/summary/', WarehouseSummaryView.as_view(), name='warehouse-summary'),
 ]
