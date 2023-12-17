@@ -15,7 +15,7 @@ class WarehouseProduct(models.Model):
         
     name = models.CharField(max_length = 255)
     date_added = models.DateTimeField(default = now)
-    quantity = models.IntegerField(max_length = 255)
+    quantity = models.IntegerField()
     price_per_unit = models.FloatField()
     total_price = models.FloatField()
     status = models.CharField(max_length = 40, choices = Status.choices, default = Status.AVAILABLE)
