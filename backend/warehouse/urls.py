@@ -1,10 +1,11 @@
 from django.urls import path
 
-from warehouse.views import WarehouseProductListCreateView, WarehouseSummaryView
+from warehouse.views import *
 
 app_name = 'warehouse'
 urlpatterns = [
-    path('products/', WarehouseProductListCreateView.as_view(), name='warehouse-product-list-create'),
-    path('summary/', WarehouseSummaryView.as_view(), name='warehouse-summary'),
+    path('<int:company_id>/products', WarehouseProductListCreateView.as_view()),
+    path('<int:company_id>/products/<int:warehouse_product_id>', WarehouseProductRetrieveUpdateDeleteView.as_view()),
+    path('<int:company_id>/summary', WarehouseSummaryView.as_view()),
 
 ]
