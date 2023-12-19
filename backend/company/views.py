@@ -36,7 +36,7 @@ class CompanyRetrieveUpdateDeleteView(APIView):
     def delete(self, request, id):
         company = Company.objects.get(pk=id)
         company.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({'message': f"You successfully deleted {company.name}"}, status=status.HTTP_204_NO_CONTENT)
 
 
 class ProductListCreateView(APIView):
@@ -74,7 +74,7 @@ class ProductRetrieveUpdateDeleteView(APIView):
     def delete(self, request, company_id, product_id):
         product = Product.objects.get(company=company_id, pk=product_id)
         product.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({'message': f"You successfully deleted {product.name}"}, status=status.HTTP_204_NO_CONTENT)
 
 class CatalogListCreateView(APIView):
     def get(self, request, company_id):
@@ -110,7 +110,7 @@ class CatalogRetrieveUpdateDeleteView(APIView):
     def delete(self, request, company_id, catalog_id):
         catalog = Catalog.objects.get(company=company_id, pk=catalog_id)
         catalog.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"message": f"Successfully deleted {catalog.name}"}, status=status.HTTP_204_NO_CONTENT)
 
 
 

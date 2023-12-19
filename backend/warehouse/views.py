@@ -44,7 +44,7 @@ class WarehouseProductRetrieveUpdateDeleteView(APIView):
     def delete(self, request, company_id, warehouse_product_id):
         warehouse_product = WarehouseProduct.objects.get(company=company_id, pk=warehouse_product_id)
         warehouse_product.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({'message': f"Successfully deleted {warehouse_product.name}"}, status=status.HTTP_204_NO_CONTENT)
 
 
 class WarehouseSummaryView(APIView):
