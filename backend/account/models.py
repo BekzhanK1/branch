@@ -29,6 +29,7 @@ class UserManager(BaseUserManager):
         user.is_staff = True
         user.is_superuser = True
         user.is_superadmin = True
+        user.is_active = True
         
         user.save(using = self._db)
         
@@ -40,6 +41,7 @@ class UserManager(BaseUserManager):
         user.is_staff = True
         user.is_superuser = True
         user.is_superadmin = True
+        user.is_active = True
         
         user.save(using = self._db)
         
