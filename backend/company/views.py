@@ -12,7 +12,13 @@ class CompanyListCreateView(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = CompanySerializer(data=request.data)
+        admin = request.user
+        if not admin.is_admin:
+            return Response({'error': "You don't have permission"}, status=status.HTTP_403_FORBIDDEN)
+        data = request.data
+        data['company_owner'] = admin.pk
+        serializer = CompanySerializer(data=data)
+        
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
