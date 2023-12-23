@@ -6,9 +6,9 @@ app_name = 'company'
 urlpatterns = [
     path('', CompanyListCreateView.as_view()),
     path('<int:id>', CompanyRetrieveUpdateDeleteView.as_view()),
-    path('<int:company_id>/products', ProductListCreateView.as_view()),
-    path('<int:company_id>/products/<int:product_id>', ProductRetrieveUpdateDeleteView.as_view()),
-    path('<int:company_id>/catalogs', CatalogListCreateView.as_view()),
-    path('<int:company_id>/catalogs/<int:catalog_id>', CatalogRetrieveUpdateDeleteView.as_view()),
+    path('products', ProductListCreateView.as_view()),
+    path('products/<int:product_id>', ProductRetrieveUpdateDeleteView.as_view()),
+    path('catalogs', CatalogListCreateView.as_view()),
+    path('catalogs/<int:catalog_id>', CatalogRetrieveUpdateDeleteView.as_view()),
 
 ]
