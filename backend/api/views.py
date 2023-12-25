@@ -140,6 +140,13 @@ class EmployeeRegistrationView(APIView):
             password_generated = generate_password()
             # print(password_generated)
             request.data['password'] = password_generated
+            
+            if not "company_id" in request.data:
+                    return Response({
+                        "error": "Company_id field is required"
+                    }, status = status.HTTP_400_BAD_REQUEST)
+                    
+            company_id = request.data.pop("company_id")
 
             serializer = EmployeeRegistrationSerializer(data=request.data)
             if serializer.is_valid():
@@ -147,8 +154,17 @@ class EmployeeRegistrationView(APIView):
                 data = get_tokens_for_user(user, password_generated)
                 
                 admin_user = request.user
+                
                 # Creating new CompanyEmployee and assign the data
-                company = get_object_or_404(Company, company_owner=admin_user)
+                # company = get_object_or_404(Company, company_owner=admin_user)
+                
+                if not Company.objects.filter(pk = int(company_id), company_owner = admin_user).exists():
+                    return Response({
+                        "error": "Company does not exist"
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                company = Company.objects.get(pk = int(company_id), company_owner = admin_user)
+                
                 company_employee_data = {'company': company, 'employee': user, 'title': 'Employee'}
                 CompanyEmployee.objects.create(**company_employee_data)
 
