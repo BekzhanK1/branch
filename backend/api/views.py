@@ -1,5 +1,6 @@
 import uuid
 from django.contrib.auth import authenticate, get_user_model
+from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -9,6 +10,7 @@ from django.utils.http import urlsafe_base64_decode
 from api.tokens import account_token
 
 from account.serializers import *
+from company.models import CompanyEmployee, Company
 from utils import send_email
 
 User = get_user_model()
@@ -138,11 +140,33 @@ class EmployeeRegistrationView(APIView):
             password_generated = generate_password()
             # print(password_generated)
             request.data['password'] = password_generated
+            
+            if not "company_id" in request.data:
+                    return Response({
+                        "error": "Company_id field is required"
+                    }, status = status.HTTP_400_BAD_REQUEST)
+                    
+            company_id = request.data.pop("company_id")
 
             serializer = EmployeeRegistrationSerializer(data=request.data)
             if serializer.is_valid():
                 user = serializer.save()
                 data = get_tokens_for_user(user, password_generated)
+                
+                admin_user = request.user
+                
+                # Creating new CompanyEmployee and assign the data
+                # company = get_object_or_404(Company, company_owner=admin_user)
+                
+                if not Company.objects.filter(pk = int(company_id), company_owner = admin_user).exists():
+                    return Response({
+                        "error": "Company does not exist"
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                company = Company.objects.get(pk = int(company_id), company_owner = admin_user)
+                
+                company_employee_data = {'company': company, 'employee': user, 'title': 'Employee'}
+                CompanyEmployee.objects.create(**company_employee_data)
 
                 send_email.send_credentials_to_employee(user.email, user.first_name, password_generated,
                                                         "registration_email.html")
