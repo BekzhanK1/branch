@@ -47,3 +47,5 @@ For the next launch just use
 ```
 docker-compose up
 ```
+
+The backend part will be runned on the localhost address.
