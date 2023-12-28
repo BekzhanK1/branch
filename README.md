@@ -1,12 +1,49 @@
-# branch
-Accounting system for catering
+# Brunch
 
-We use
+## Table of Contents
 
--React for Frontend
+- [About](#about)
+- [Getting Started](#getting_started)
+- [Usage](#usage)
+- [Contributing](../CONTRIBUTING.md)
 
--Django for Backend
+## About <a name = "about"></a>
 
--Postgres for Database
+Accounting system for catering.
 
--For start use sqlite3 db (P.S. Aimurat)
+Frontend - React \
+Backend - Django, Celery \
+DBMS - SQLite (just for now), Redis (for cache)
+
+
+## Getting Started <a name = "getting_started"></a>
+
+### Prerequisites
+
+To run the project, you need to install the Docker desktop
+
+```
+Install Docker desktop. 
+https://www.docker.com/products/docker-desktop/
+```
+
+### Installing
+
+Make sure that you do not have running Redis server. If so, stop it
+
+```
+cd branch
+```
+
+For initial launch, run:
+
+```
+docker-compose up --build
+```
+
+To stop the app, just use CTRL+C in the command line.\
+For the next launch just use
+
+```
+docker-compose up
+```

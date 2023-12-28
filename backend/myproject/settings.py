@@ -26,8 +26,9 @@ SECRET_KEY = "django-insecure-xsrcj8)az3_mq2-(x2_6swobic5+&uz8j*+sjdu$t)y=9nr_9d
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
+SITE_URL = "localhost"
 
 # Application definition
 
@@ -123,6 +124,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, STATIC_URL)
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -168,3 +170,13 @@ EMAIL_HOST_USER = 'branch.astana@gmail.com'
 EMAIL_HOST_PASSWORD = 'bgan ysjy tgsf fhmy'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+
+
+# REDIS Configuration
+
+# CELERY_BROKER_URL = 'rediss://red-cm5uboi1hbls73alsvd0:CSMXcVY0eDUm2UPzB3aj048UlxWW9m2m@frankfurt-redis.render.com:6379'
+# CELERY_BROKER_URL = 'redis://127.0.0.1:6379'
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL")
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+
