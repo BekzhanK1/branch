@@ -84,7 +84,11 @@ class ProductListCreateView(APIView):
         
         company = Company.objects.get(pk = int(company_id))
         
-        if not (company.company_owner.id != user.id) or not (CompanyEmployee.objects.filter(company__id = int(company_id), employee__id = int(user.id)).exists()):
+        if user.is_admin and (company.company_owner.id != user.id):
+            return Response({
+                "error": "You don't have permission for this company"
+            }, status = status.HTTP_403_FORBIDDEN)
+        elif user.is_employee and not (CompanyEmployee.objects.filter(companyid = int(company_id), employeeid = int(user.id)).exists()):
             return Response({
                 "error": "You don't have permission for this company"
             }, status = status.HTTP_403_FORBIDDEN)
@@ -99,7 +103,11 @@ class ProductListCreateView(APIView):
         
         company = Company.objects.get(pk = int(company_id))
         
-        if not (company.company_owner.id != user.id) or not (CompanyEmployee.objects.filter(company__id = int(company_id), employee__id = int(user.id)).exists()):
+        if user.is_admin and (company.company_owner.id != user.id):
+            return Response({
+                "error": "You don't have permission for this company"
+            }, status = status.HTTP_403_FORBIDDEN)
+        elif user.is_employee and not (CompanyEmployee.objects.filter(companyid = int(company_id), employeeid = int(user.id)).exists()):
             return Response({
                 "error": "You don't have permission for this company"
             }, status = status.HTTP_403_FORBIDDEN)
@@ -119,7 +127,11 @@ class ProductRetrieveUpdateDeleteView(APIView):
 
         company = Company.objects.get(pk = int(company_id))
         
-        if not (company.company_owner.id != user.id) or not (CompanyEmployee.objects.filter(company__id = int(company_id), employee__id = int(user.id)).exists()):
+        if user.is_admin and (company.company_owner.id != user.id):
+            return Response({
+                "error": "You don't have permission for this company"
+            }, status = status.HTTP_403_FORBIDDEN)
+        elif user.is_employee and not (CompanyEmployee.objects.filter(companyid = int(company_id), employeeid = int(user.id)).exists()):
             return Response({
                 "error": "You don't have permission for this company"
             }, status = status.HTTP_403_FORBIDDEN)
@@ -139,7 +151,11 @@ class ProductRetrieveUpdateDeleteView(APIView):
 
         company = Company.objects.get(pk = int(company_id))
         
-        if not (company.company_owner.id != user.id) or not (CompanyEmployee.objects.filter(company__id = int(company_id), employee__id = int(user.id)).exists()):
+        if user.is_admin and (company.company_owner.id != user.id):
+            return Response({
+                "error": "You don't have permission for this company"
+            }, status = status.HTTP_403_FORBIDDEN)
+        elif user.is_employee and not (CompanyEmployee.objects.filter(companyid = int(company_id), employeeid = int(user.id)).exists()):
             return Response({
                 "error": "You don't have permission for this company"
             }, status = status.HTTP_403_FORBIDDEN)
@@ -170,7 +186,11 @@ class ProductRetrieveUpdateDeleteView(APIView):
 
         company = Company.objects.get(pk = int(company_id))
         
-        if not (company.company_owner.id != user.id) or not (CompanyEmployee.objects.filter(company__id = int(company_id), employee__id = int(user.id)).exists()):
+        if user.is_admin and (company.company_owner.id != user.id):
+            return Response({
+                "error": "You don't have permission for this company"
+            }, status = status.HTTP_403_FORBIDDEN)
+        elif user.is_employee and not (CompanyEmployee.objects.filter(companyid = int(company_id), employeeid = int(user.id)).exists()):
             return Response({
                 "error": "You don't have permission for this company"
             }, status = status.HTTP_403_FORBIDDEN)
@@ -193,7 +213,11 @@ class CatalogListCreateView(APIView):
 
         company = Company.objects.get(pk = int(company_id))
         
-        if not (company.company_owner.id != user.id) or not (CompanyEmployee.objects.filter(company__id = int(company_id), employee__id = int(user.id)).exists()):
+        if user.is_admin and (company.company_owner.id != user.id):
+            return Response({
+                "error": "You don't have permission for this company"
+            }, status = status.HTTP_403_FORBIDDEN)
+        elif user.is_employee and not (CompanyEmployee.objects.filter(companyid = int(company_id), employeeid = int(user.id)).exists()):
             return Response({
                 "error": "You don't have permission for this company"
             }, status = status.HTTP_403_FORBIDDEN)
@@ -207,7 +231,11 @@ class CatalogListCreateView(APIView):
 
         company = Company.objects.get(pk = int(company_id))
         
-        if not (company.company_owner.id != user.id) or not (CompanyEmployee.objects.filter(company__id = int(company_id), employee__id = int(user.id)).exists()):
+        if user.is_admin and (company.company_owner.id != user.id):
+            return Response({
+                "error": "You don't have permission for this company"
+            }, status = status.HTTP_403_FORBIDDEN)
+        elif user.is_employee and not (CompanyEmployee.objects.filter(companyid = int(company_id), employeeid = int(user.id)).exists()):
             return Response({
                 "error": "You don't have permission for this company"
             }, status = status.HTTP_403_FORBIDDEN)
@@ -234,7 +262,11 @@ class CatalogRetrieveUpdateDeleteView(APIView):
 
         company = Company.objects.get(pk = int(company_id))
         
-        if not (company.company_owner.id != user.id) or not (CompanyEmployee.objects.filter(company__id = int(company_id), employee__id = int(user.id)).exists()):
+        if user.is_admin and (company.company_owner.id != user.id):
+            return Response({
+                "error": "You don't have permission for this company"
+            }, status = status.HTTP_403_FORBIDDEN)
+        elif user.is_employee and not (CompanyEmployee.objects.filter(companyid = int(company_id), employeeid = int(user.id)).exists()):
             return Response({
                 "error": "You don't have permission for this company"
             }, status = status.HTTP_403_FORBIDDEN)
@@ -254,7 +286,11 @@ class CatalogRetrieveUpdateDeleteView(APIView):
 
         company = Company.objects.get(pk = int(company_id))
         
-        if not (company.company_owner.id != user.id) or not (CompanyEmployee.objects.filter(company__id = int(company_id), employee__id = int(user.id)).exists()):
+        if user.is_admin and (company.company_owner.id != user.id):
+            return Response({
+                "error": "You don't have permission for this company"
+            }, status = status.HTTP_403_FORBIDDEN)
+        elif user.is_employee and not (CompanyEmployee.objects.filter(companyid = int(company_id), employeeid = int(user.id)).exists()):
             return Response({
                 "error": "You don't have permission for this company"
             }, status = status.HTTP_403_FORBIDDEN)
@@ -286,7 +322,11 @@ class CatalogRetrieveUpdateDeleteView(APIView):
 
         company = Company.objects.get(pk = int(company_id))
         
-        if not (company.company_owner.id != user.id) or not (CompanyEmployee.objects.filter(company__id = int(company_id), employee__id = int(user.id)).exists()):
+        if user.is_admin and (company.company_owner.id != user.id):
+            return Response({
+                "error": "You don't have permission for this company"
+            }, status = status.HTTP_403_FORBIDDEN)
+        elif user.is_employee and not (CompanyEmployee.objects.filter(companyid = int(company_id), employeeid = int(user.id)).exists()):
             return Response({
                 "error": "You don't have permission for this company"
             }, status = status.HTTP_403_FORBIDDEN)
@@ -298,4 +338,5 @@ class CatalogRetrieveUpdateDeleteView(APIView):
 
         catalog = Catalog.objects.get(company=company, pk=catalog_id)
         catalog.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
         
