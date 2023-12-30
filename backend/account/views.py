@@ -10,6 +10,15 @@ from utils import send_email
 
 User = get_user_model()
 
+from api.tokens import account_token
+from django.template.loader import render_to_string
+from django.utils.encoding import force_bytes
+from django.template.loader import get_template
+from django.utils.http import urlsafe_base64_encode
+
+from api.tasks import send_reset_password_email_to_admin
+
+from myproject.settings import SITE_URL
 
 # Create your views here.
 
@@ -57,20 +66,36 @@ class EmployeeResetPasswordView(APIView):
 
 class AdminResetPasswordView(APIView):
     permission_classes = (permissions.AllowAny,)
+    
+    def send_reset_password_to_admin(self, request, user, email):
+        
+        request_dict = {
+            'admin': user.first_name + " " + user.last_name,
+            'domain': SITE_URL,
+            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+            'token': account_token.make_token(user),
+            "protocol": 'https' if request.is_secure() else 'http',
+            'to_email': email
+        }
+        
+        send_reset_password_email_to_admin.delay(**request_dict)
 
     def post(self, request):
         data = request.data
         if "email" not in data.keys():
-            return Response({"error": "email is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         email = data["email"]
 
         try:
             user = User.objects.get(email=email)
         except:
-            return Response({"error": "user with this email doesn't exist"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "User with this email doesn't exist"}, status=status.HTTP_404_NOT_FOUND)
         if not user.is_admin:
-            return Response({"error": "user with this email doesn't exist"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "User with this email doesn't exist"}, status=status.HTTP_404_NOT_FOUND)
 
-        send_email.send_reset_password_email_to_admin(request, user, email)
-        return Response({"message": f"email sent to {email}"})
+        # send_email.send_reset_password_email_to_admin(request, user, email)
+        
+        self.send_reset_password_to_admin(request, user, email)
+        
+        return Response({"message": f"Email sent to {email}"})

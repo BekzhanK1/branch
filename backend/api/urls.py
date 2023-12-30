@@ -1,7 +1,9 @@
-from django.urls import path
+from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
+
+from warehouse.views import WarehouseProductListCreateView, WarehouseSummaryView
 from .views import *
-from account import views
+from account import views as account_views
 
 urlpatterns = [
     path('login', LoginView.as_view()),
@@ -13,7 +15,13 @@ urlpatterns = [
     path('token/refresh/', TokenRefreshView.as_view()),
     path('token/verify/', TokenVerifyView.as_view()),
 
-    path('reset_password', views.EmployeeResetPasswordView.as_view()),
-    path('reset_password_admin', views.AdminResetPasswordView.as_view()),
-    path('reset/<uidb64>/<token>', SetNewPasswordAdmin.as_view(), name="reset")
+    path('reset-password', account_views.EmployeeResetPasswordView.as_view()),
+    path('reset-password-admin', account_views.AdminResetPasswordView.as_view()),
+    path('reset/<uidb64>/<token>', SetNewPasswordAdmin.as_view(), name="reset"),
+
+    path('warehouse/', include('warehouse.urls')),
+    path('company/', include('company.urls')),
+
+
+
 ]
