@@ -11,7 +11,7 @@ class MenuItemListCreateView(APIView):
     def get(self, request, company_id):
         user = request.user
 
-        company = Company.object.get(pk = int(company_id))
+        company = Company.objects.get(pk = int(company_id))
         if user.is_admin and (company.company_owner.id != user.id): 
             return Response({
                 "error": "you don't have permission for this company"
@@ -27,7 +27,7 @@ class MenuItemListCreateView(APIView):
     def post(self, request, company_id): 
         user = request.user
 
-        company = Company.object.get(pk = int(company_id))
+        company = Company.objects.get(pk = int(company_id))
 
         if user.is_admin and (company.company_owner.id != user.id): 
             return Response({
