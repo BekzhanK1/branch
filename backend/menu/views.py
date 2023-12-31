@@ -20,7 +20,7 @@ class MenuItemListCreateView(APIView):
             return Response({
                 "error": "You don't have permission for this company"
             }, status=status.HTTP_403_FORBIDDEN)
-        menu_item = MenuItem.objects.get(company = company)
+        menu_item = MenuItem.objects.filter(company = company)
         serializer = MenuItemSerializer(menu_item, many = True)
         return Response(serializer.data)
 
