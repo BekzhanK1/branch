@@ -62,11 +62,11 @@ class MenuItemRetrieveUpdateDeleteView(APIView):
             "error": "Such product does not exist"
             }, status = status.HTTP_400_BAD_REQUEST)
             
-        warehouse_product = MenuItem.objects.get(company=company_id, pk=menu_item_id)
-        serializer = MenuItemSerializer(warehouse_product)
+        menu_item = MenuItem.objects.get(company=company_id, pk=menu_item_id)
+        serializer = MenuItemSerializer(menu_item)
         return Response(serializer.data)
 
-    def patch(self, request, company_id, warehouse_product_id):
+    def patch(self, request, company_id, menu_item_id):
         user = request.user
         
         company = Company.objects.get(pk = int(company_id))
@@ -80,13 +80,13 @@ class MenuItemRetrieveUpdateDeleteView(APIView):
                 "error": "You don't have permission for this company"
             }, status = status.HTTP_403_FORBIDDEN)
         
-        if not MenuItem.objects.filter(pk = warehouse_product_id).exists():
+        if not MenuItem.objects.filter(pk = menu_item_id).exists():
             return Response({
                 "error": "Such product does not exist"
             }, status = status.HTTP_400_BAD_REQUEST)
         
-        warehouse_product = MenuItem.objects.get(company=company_id, pk=warehouse_product_id)
-        serializer = MenuItemSerializer(warehouse_product, data=request.data, partial=True)
+        menu_item = MenuItem.objects.get(company=company_id, pk=menu_item_id)
+        serializer = MenuItemSerializer(menu_item, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -100,7 +100,7 @@ class MenuItemRetrieveUpdateDeleteView(APIView):
                     "error": errors
                 }, status = status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, company_id, warehouse_product_id):
+    def delete(self, request, company_id, menu_item_id):
         user = request.user
         company = Company.objects.get(pk = int(company_id))
         
@@ -113,13 +113,13 @@ class MenuItemRetrieveUpdateDeleteView(APIView):
                 "error": "You don't have permission for this company"
             }, status = status.HTTP_403_FORBIDDEN)
             
-        if not MenuItem.objects.filter(pk = warehouse_product_id).exists():
+        if not MenuItem.objects.filter(pk = menu_item_id).exists():
             return Response({
                 "error": "Such product does not exist"
             }, status = status.HTTP_400_BAD_REQUEST)
         
-        warehouse_product = MenuItem.objects.get(company=company_id, pk=warehouse_product_id)
-        warehouse_product.delete()
+        menu_item = MenuItem.objects.get(company=company_id, pk=menu_item_id)
+        menu_item.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
 class CategoryListCreateView(APIView):
@@ -140,8 +140,8 @@ class CategoryListCreateView(APIView):
                 "error": "You don't have permission for this company"
             }, status = status.HTTP_403_FORBIDDEN)
 
-        catalogs = Category.objects.filter(company=company)
-        serializer = CategorySerializer(catalogs, many=True)
+        category = Category.objects.filter(company=company)
+        serializer = CategorySerializer(category, many=True)
         return Response(serializer.data)
 
     def post(self, request, company_id):
@@ -191,11 +191,11 @@ class CategorygRetrieveUpdateDeleteView(APIView):
             
         if not Category.objects.filter(pk = category_id, company__id = company_id).exists():
             return Response({
-                "error": "Such catalog does not exist"
+                "error": "Such category does not exist"
             }, status = status.HTTP_400_BAD_REQUEST)
             
-        catalog = Category.objects.get(company=company, pk=category_id)
-        serializer = CategorySerializer(catalog)
+        category = Category.objects.get(company=company, pk=category_id)
+        serializer = CategorySerializer(category)
         return Response(serializer.data)
         
 
@@ -215,12 +215,11 @@ class CategorygRetrieveUpdateDeleteView(APIView):
             
         if not Category.objects.filter(pk = category_id, company__id = company_id).exists():
             return Response({
-                "error": "Such catalog does not exist"
+                "error": "Such category does not exist"
             }, status = status.HTTP_400_BAD_REQUEST)
 
         category = Category.objects.get(company=company, pk=category_id)
-        serializer = CategorySerializer(
-            category, data=request.data, partial=True)
+        serializer = CategorySerializer(category, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -251,9 +250,9 @@ class CategorygRetrieveUpdateDeleteView(APIView):
             
         if not Category.objects.filter(pk = category_id, company__id = company_id).exists():
             return Response({
-                "error": "Such catalog does not exist"
+                "error": "Such category does not exist"
             }, status = status.HTTP_400_BAD_REQUEST)
 
-        catalog = Category.objects.get(company=company, pk=category_id)
-        catalog.delete()
+        category = Category.objects.get(company=company, pk=category_id)
+        category.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
