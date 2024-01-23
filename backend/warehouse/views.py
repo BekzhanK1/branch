@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.db import models
-from company.models import Company, CompanyEmployee
+from company.models import Company
 
 from company.permissions import AdminLevelPermission, EmployeeLevelPermission
 from .models import WarehouseProduct

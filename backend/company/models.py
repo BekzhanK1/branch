@@ -19,19 +19,19 @@ class Company(models.Model):
     phone_number = models.CharField(max_length = 255)
     type = models.CharField(max_length = 50, choices = CompanyType.choices)
 
-    company_owner = models.ForeignKey(User, on_delete = models.CASCADE, related_name = "owned_company", default = 63)
+    company_owner = models.ForeignKey(User, on_delete = models.CASCADE, related_name = "company", default = 63)
 
     def __str__(self):
         return self.name
     
 class CompanyEmployee(models.Model):
-    company = models.ForeignKey(Company, on_delete=models.CASCADE)
-    employee = models.ForeignKey(User, on_delete=models.CASCADE)
+    # company = models.ForeignKey(Company, on_delete=models.CASCADE)
+    # employee = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     start_date = models.DateField(default = now)
 
-    def __str__(self):
-        return f"{self.employee} - {self.title} at {self.company}"
+    # def __str__(self):
+        # return f"{self.employee} - {self.title} at {self.company}"
     
 class Catalog(models.Model):
     name = models.CharField(max_length = 255)
