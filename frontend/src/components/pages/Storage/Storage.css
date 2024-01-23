@@ -1,0 +1,22 @@
+body{
+    display: block;
+}
+
+#root{
+    width: 100vw;
+    height: 100vh;
+}
+
+tr{
+    display: flex;
+    height: 48px;
+    justify-content: center;
+    align-items: center;
+    background-color: white;
+    padding-inline: 8px;
+    border: 0.5px solid #697077
+}
+
+td:not(:first-child),th:not(:first-child){
+    flex:1;
+}

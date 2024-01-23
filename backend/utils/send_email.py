@@ -8,6 +8,7 @@ from django.template.loader import get_template
 from account.serializers import *
 from api.tokens import account_token
 
+from time import sleep
 
 def activateEmail(request, user, to_email):
     mail_subject = "Activate your user account."
@@ -28,6 +29,9 @@ def activateEmail(request, user, to_email):
 
 
 def send_credentials_to_employee(user_email, first_name, password, template):
+    
+    # sleep(10) #To simulate delay
+    
     template = get_template(template)
 
     context = {
