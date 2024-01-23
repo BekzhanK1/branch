@@ -1,16 +1,19 @@
 import uuid
 from django.contrib.auth import authenticate, get_user_model
 from django.shortcuts import get_object_or_404
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
+
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.utils.encoding import force_str
-from django.utils.http import urlsafe_base64_decode
+
 from api.tokens import account_token
 
 from account.serializers import *
 from company.models import CompanyEmployee, Company
+
 from utils import send_email
 
 from .tasks import send_credentials_to_employee, activateEmail
@@ -24,6 +27,7 @@ from django.template.loader import get_template
 from django.utils.http import urlsafe_base64_encode
 
 from myproject.settings import SITE_URL
+
 
 # Create your views here.
 
@@ -97,7 +101,7 @@ class ActivateClass(APIView):
         return Response({"error": "couldn't activate account"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AdminRegistrationView(APIView):
+class OwnerRegistrationView(APIView):
     permission_classes = (permissions.AllowAny,)
     
     def send_activation_email(self, request, user: User):
@@ -126,7 +130,7 @@ class AdminRegistrationView(APIView):
         #         status=status.HTTP_403_FORBIDDEN
         #     )
 
-        serializer = AdminRegistrationSerializer(data=request.data)
+        serializer = OwnerRegistrationSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
             # user.save()
@@ -137,8 +141,6 @@ class AdminRegistrationView(APIView):
             # activateEmail.delay(user, user.email)
             self.send_activation_email(request, user)
             
-            response_dict = {'user': UserSerializer(user).data}
-            response_dict.update(data)
             return Response(data, status=status.HTTP_201_CREATED)
 
         # Creating dict with errors, keys are field names, values are error messages
@@ -152,73 +154,109 @@ class AdminRegistrationView(APIView):
 def generate_password():
     return uuid.uuid4().hex[:10]
 
-
 class EmployeeRegistrationView(APIView):
-    # permission_classes = (permissions.AllowAny,)
+    permission_classes = [permissions.AllowAny]  # Adjust the permissions as needed
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
+        # Serialize User data
+        password_generated = generate_password()
+        request.data['password'] = password_generated
+        
+        print(request.data)
+        user_serializer = EmployeeRegistrationSerializer(data=request.data)
+        if user_serializer.is_valid():
+            user_instance = user_serializer.save()
 
-        user = request.user
-        # if not user.is_superadmin or not user.is_admin:
-        # if not user.is_superadmin or not user.is_admin:
-        #     return Response(
-        #         {'error': "You don't have a permission"},
-        #         status=status.HTTP_403_FORBIDDEN
-        #     )
-
-        if user.is_superadmin or user.is_admin:
-            password_generated = generate_password()
-            # print(password_generated)
-            request.data['password'] = password_generated
+            # Serialize Employee data
+            # employee_data = {'user_id': user_instance.id, 'position_id': request.data.get('position_id'), 'company_id': request.data.get("company_id")}
             
-            if not "company_id" in request.data:
-                    return Response({
-                        "error": "Company_id field is required"
-                    }, status = status.HTTP_400_BAD_REQUEST)
-                    
-            company_id = request.data.pop("company_id")
+            employee_data = request.data
+            employee_data.update({
+                "user_id": user_instance.id
+            })
+            
+            employee_serializer = EmployeeUserSerializer(data=employee_data)
 
-            serializer = EmployeeRegistrationSerializer(data=request.data)
-            if serializer.is_valid():
-                user = serializer.save()
-                data = get_tokens_for_user(user, password_generated)
+            if employee_serializer.is_valid():
+                employee_instance = employee_serializer.save()
                 
-                admin_user = request.user
-                
-                # Creating new CompanyEmployee and assign the data
-                # company = get_object_or_404(Company, company_owner=admin_user)
-                
-                if not Company.objects.filter(pk = int(company_id), company_owner = admin_user).exists():
-                    return Response({
-                        "error": "Company does not exist"
-                    }, status=status.HTTP_400_BAD_REQUEST)
-                
-                company = Company.objects.get(pk = int(company_id), company_owner = admin_user)
-                
-                company_employee_data = {'company': company, 'employee': user, 'title': 'Employee'}
-                CompanyEmployee.objects.create(**company_employee_data)
-
-                # send_email.send_credentials_to_employee(user.email, user.first_name, password_generated,
-                #                                         "registration_email.html")
-                
-                send_credentials_to_employee.delay(user.email, user.first_name, password_generated,
+                send_credentials_to_employee.delay(user_instance.email, user_instance.first_name, password_generated,
                                                         "registration_email.html")
                 
-                response_dict = {'user': UserSerializer(user)}
-                response_dict.update(data)
-                return Response(data, status=status.HTTP_201_CREATED)
-
-            # Creating dict with errors, keys are field names, values are error messages
-            errors = {}
-            for field, error_detail in serializer.errors.items():
-                errors[field] = error_detail[0]
-
-            return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(employee_serializer.data, status=status.HTTP_201_CREATED)
+            else:
+                user_instance.delete()  # Rollback user creation if employee creation fails
+                return Response(employee_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
-            return Response(
-                {'error': "You don't have a permission"},
-                status=status.HTTP_403_FORBIDDEN
-            )
+            return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# class EmployeeRegistrationView(APIView):
+#     # permission_classes = (permissions.AllowAny,)
+
+#     def post(self, request):
+
+#         user = request.user
+#         # if not user.is_superadmin or not user.is_admin:
+#         # if not user.is_superadmin or not user.is_admin:
+#         #     return Response(
+#         #         {'error': "You don't have a permission"},
+#         #         status=status.HTTP_403_FORBIDDEN
+#         #     )
+
+#         if user.is_superadmin or user.is_admin:
+#             password_generated = generate_password()
+#             # print(password_generated)
+#             request.data['password'] = password_generated
+            
+#             if not "company_id" in request.data:
+#                     return Response({
+#                         "error": "Company_id field is required"
+#                     }, status = status.HTTP_400_BAD_REQUEST)
+                    
+#             company_id = request.data.pop("company_id")
+
+#             serializer = EmployeeRegistrationSerializer(data=request.data)
+#             if serializer.is_valid():
+#                 user = serializer.save()
+#                 data = get_tokens_for_user(user, password_generated)
+                
+#                 admin_user = request.user
+                
+#                 # Creating new CompanyEmployee and assign the data
+#                 # company = get_object_or_404(Company, company_owner=admin_user)
+                
+#                 if not Company.objects.filter(pk = int(company_id), company_owner = admin_user).exists():
+#                     return Response({
+#                         "error": "Company does not exist"
+#                     }, status=status.HTTP_400_BAD_REQUEST)
+                
+#                 company = Company.objects.get(pk = int(company_id), company_owner = admin_user)
+                
+#                 company_employee_data = {'company': company, 'employee': user, 'title': 'Employee'}
+#                 CompanyEmployee.objects.create(**company_employee_data)
+
+#                 # send_email.send_credentials_to_employee(user.email, user.first_name, password_generated,
+#                 #                                         "registration_email.html")
+                
+#                 send_credentials_to_employee.delay(user.email, user.first_name, password_generated,
+#                                                         "registration_email.html")
+                
+#                 response_dict = {'user': UserSerializer(user)}
+#                 response_dict.update(data)
+#                 return Response(data, status=status.HTTP_201_CREATED)
+
+#             # Creating dict with errors, keys are field names, values are error messages
+#             errors = {}
+#             for field, error_detail in serializer.errors.items():
+#                 errors[field] = error_detail[0]
+
+#             return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
+#         else:
+#             return Response(
+#                 {'error': "You don't have a permission"},
+#                 status=status.HTTP_403_FORBIDDEN
+#             )
 
 
 class SetNewPasswordAdmin(APIView):
