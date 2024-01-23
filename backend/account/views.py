@@ -93,8 +93,6 @@ class AdminResetPasswordView(APIView):
             return Response({"error": "User with this email doesn't exist"}, status=status.HTTP_404_NOT_FOUND)
         if not user.is_admin:
             return Response({"error": "User with this email doesn't exist"}, status=status.HTTP_404_NOT_FOUND)
-
-        # send_email.send_reset_password_email_to_admin(request, user, email)
         
         self.send_reset_password_to_admin(request, user, email)
         
