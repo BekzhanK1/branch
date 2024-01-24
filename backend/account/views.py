@@ -87,12 +87,12 @@ class AdminResetPasswordView(APIView):
 
         email = data["email"]
 
-        try:
-            user = User.objects.get(email=email)
-        except:
+        if not User.objects.filter(email = email, user_type = "owner").exists():
             return Response({"error": "User with this email doesn't exist"}, status=status.HTTP_404_NOT_FOUND)
-        if not user.is_admin:
-            return Response({"error": "User with this email doesn't exist"}, status=status.HTTP_404_NOT_FOUND)
+        
+        user = User.objects.get(email=email, user_type = "owner")
+        
+        # send_email.send_reset_password_email_to_admin(request, user, email)
         
         self.send_reset_password_to_admin(request, user, email)
         
