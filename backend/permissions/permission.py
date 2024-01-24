@@ -23,3 +23,13 @@ class EmployeeLevelPermission(permissions.BasePermission):
             return True
         
         return False
+    
+class CustomerPermission(permissions.BasePermission):
+
+    def has_permission(self, request, view):
+        if view.action in ['list', 'retrieve', 'partial_update', 'destroy']:
+            return request.user.is_authenticated() and (request.user.is_admin or request.user.is_superadmin)
+        elif view.action in ['create', 'partial_update']:
+            return request.user.is_authenticated() and request.user.is_customer
+        else:
+            return False

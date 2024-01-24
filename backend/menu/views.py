@@ -3,11 +3,11 @@ from rest_framework.response import Response
 from rest_framework import status 
 from .models import Category, MenuItem
 from .serializers import CategorySerializer, MenuItemSerializer
-from company.permissions import *
+from permissions import permission
 from company.models import Company, CompanyEmployee
 
 class MenuItemListCreateView(APIView): 
-    permission_classes = (EmployeeLevelPermission, )
+    permission_classes = (permission.EmployeeLevelPermission, )
     def get(self, request, company_id):
         user = request.user
 
@@ -124,7 +124,7 @@ class MenuItemRetrieveUpdateDeleteView(APIView):
     
 class CategoryListCreateView(APIView):
     
-    permission_classes = (EmployeeLevelPermission, )
+    permission_classes = (permission.EmployeeLevelPermission, )
     
     def get(self, request, company_id):
         user = request.user

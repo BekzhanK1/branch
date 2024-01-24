@@ -31,7 +31,7 @@ class AdminRegistrationSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         password = validated_data.pop("password")
-        user = User.objects.create_admin(password=password, **validated_data)
+        user = User.objects.create_owner(password=password, **validated_data)
         return user
     
 class EmployeeRegistrationSerializer(serializers.ModelSerializer):
@@ -44,4 +44,16 @@ class EmployeeRegistrationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         password = validated_data.pop("password")
         user = User.objects.create_employee(password=password, **validated_data)
+        return user
+
+class CustomerRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ['email', 'password', 'first_name', 'last_name', 'phonenumber']
+
+    def create(self, validated_data):
+        password = validated_data.pop("password")
+        user = User.objects.create_customer(password=password, **validated_data)
         return user

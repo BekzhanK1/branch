@@ -3,11 +3,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Company, Catalog, Product, CompanyEmployee
 from .serializers import CompanySerializer, CatalogSerializer, ProductSerializer
-from .permissions import *
+from permissions import permission
 
 class CompanyListCreateView(APIView):
     
-    permission_classes = (AdminLevelPermission, )
+    permission_classes = (permission.AdminLevelPermission, )
     
     def get(self, request):
         companies = Company.objects.all()
@@ -29,7 +29,7 @@ class CompanyListCreateView(APIView):
 
 class CompanyRetrieveUpdateDeleteView(APIView):
     
-    permission_classes = (AdminLevelPermission, )
+    permission_classes = (permission.AdminLevelPermission, )
     
     def get(self, request, company_id):
         user = request.user
@@ -77,7 +77,7 @@ class CompanyRetrieveUpdateDeleteView(APIView):
 
 class ProductListCreateView(APIView):
     
-    permission_classes = (EmployeeLevelPermission, )
+    permission_classes = (permission.EmployeeLevelPermission, )
 
     def get(self, request, company_id):
         user = request.user
@@ -206,7 +206,7 @@ class ProductRetrieveUpdateDeleteView(APIView):
 
 class CatalogListCreateView(APIView):
     
-    permission_classes = (EmployeeLevelPermission, )
+    permission_classes = (permission.EmployeeLevelPermission, )
     
     def get(self, request, company_id):
         user = request.user

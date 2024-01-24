@@ -47,7 +47,7 @@ class UserManager(BaseUserManager):
         
         return user
     
-    def create_admin(self, email, first_name, last_name, phonenumber, password = None):
+    def create_owner(self, email, first_name, last_name, phonenumber, password = None):
         user = self.create_user(email, first_name, last_name, phonenumber, password)
         
         # user.is_superuser = True
@@ -67,7 +67,14 @@ class UserManager(BaseUserManager):
         user.save(using = self._db)
         
         return user
+    
+    def create_customer(self, email, first_name, last_name, phonenumber, password = None):
+        user = self.create_user(email, first_name, last_name, phonenumber, password)
         
+        user.is_customer = True
+        user.save(using = self._db)
+
+        return user
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -85,6 +92,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_admin = models.BooleanField(default=False)
     
     is_employee = models.BooleanField(default=False)
+
+    is_customer = models.BooleanField(default=False)
     
     objects = UserManager()
     

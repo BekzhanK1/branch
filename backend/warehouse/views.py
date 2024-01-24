@@ -7,13 +7,13 @@ from rest_framework import status
 from django.db import models
 from company.models import Company, CompanyEmployee
 
-from company.permissions import AdminLevelPermission, EmployeeLevelPermission
+from permissions import permission
 from .models import WarehouseProduct
 from .serializers import WarehouseProductSerializer
 
 
 class WarehouseProductListCreateView(APIView):
-    permission_classes = (EmployeeLevelPermission, )
+    permission_classes = (permission.EmployeeLevelPermission, )
     def get(self, request, company_id):
         user = request.user
         
@@ -134,7 +134,7 @@ class WarehouseProductRetrieveUpdateDeleteView(APIView):
 
 
 class WarehouseSummaryView(APIView):
-    permission_classes = (EmployeeLevelPermission,)
+    permission_classes = (permission.EmployeeLevelPermission,)
     def get(self, request, company_id):
         user = request.user
         

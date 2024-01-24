@@ -79,7 +79,6 @@ class ActivateClass(APIView):
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
             user = User.objects.get(pk=uid)
-            print('Here')
 
         except:
             user = None
@@ -250,3 +249,46 @@ class SetNewPasswordAdmin(APIView):
         # else:
         #     messages.error(request, "Activation link is invalid!")
         return Response({"error": "couldn't change password"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CustomerRegistrationView(APIView):
+    permission_classes = (permissions.AllowAny,)
+    
+    def send_activation_email(self, request, user: User):
+        
+        activation_dict = {
+            'user': user.first_name + " " + user.last_name,
+            'domain_name': SITE_URL,
+            'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+            'token': account_token.make_token(user),
+            "protocol": 'https' if request.is_secure() else 'http',
+            'to_email': user.email,
+            'template': 'template_activate_account.html'
+        }
+        
+        print(activation_dict)
+        activateEmail.delay(**activation_dict)
+        
+
+    def post(self, request):
+
+
+        serializer = CustomerRegistrationSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            # user.save()
+            data = get_tokens_for_user(user)
+            
+            self.send_activation_email(request, user)
+            
+            response_dict = {'user': UserSerializer(user).data}
+            response_dict.update(data)
+            return Response(data, status=status.HTTP_201_CREATED)
+
+        # Creating dict with errors, keys are field names, values are error messages
+        errors = {}
+        for field, error_detail in serializer.errors.items():
+            errors[field] = error_detail[0]
+
+        return Response({"error": errors}, status=status.HTTP_400_BAD_REQUEST)
+
