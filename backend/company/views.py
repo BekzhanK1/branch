@@ -18,7 +18,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
         if user.is_owner:
             return Company.objects.filter(company_owner = user)
         elif user.is_employee == user.company:
-            return Company.objects.filter(company = user.company)
+            return Company.objects.filter(pk = user.company)
         else:
             PermissionDenied("You don't have permission for this company")
             
