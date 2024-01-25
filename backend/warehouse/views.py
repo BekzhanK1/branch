@@ -3,7 +3,9 @@ from django.shortcuts import render
 # Create your views here.
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, viewsets
+from rest_framework.exceptions import PermissionDenied
+from django.shortcuts import get_object_or_404
 from django.db import models
 from company.models import Company
 
@@ -12,148 +14,81 @@ from .models import WarehouseProduct
 from .serializers import WarehouseProductSerializer
 
 
-class WarehouseProductListCreateView(APIView):
+class WarehouseProductViewSet(viewsets.ModelViewSet):
     permission_classes = (permission.EmployeeLevelPermission, )
-    def get(self, request, company_id):
+    serializer_class = WarehouseProductSerializer
+    
+    def get_queryset(self):
+        user = self.request.user
+        company_id = self.kwargs.get('company_id')
+        
+        if user.is_owner:
+            company = get_object_or_404(Company, pk = company_id, company_owner = user)
+            return WarehouseProduct.objects.filter(company = company)
+        elif user.is_employee and company_id == user.company:
+            return WarehouseProduct.objects.filter(company = user.company)
+    
+    def list(self, request, company_id=None):
+        queryset = self.get_queryset()
+        serializer = self.serializer_class(queryset, many = True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def create(self, request, company_id=None):
         user = request.user
-        
-        company = Company.objects.get(pk = int(company_id))
-        
-        if user.is_admin and (company.company_owner.id != user.id):
-            return Response({
-                "error": "You don't have permission for this company"
-            }, status = status.HTTP_403_FORBIDDEN)
-        elif user.is_employee and not (CompanyEmployee.objects.filter(companyid = int(company_id), employeeid = int(user.id)).exists()):
-            return Response({
-                "error": "You don't have permission for this company"
-            }, status = status.HTTP_403_FORBIDDEN)
-
-        products = WarehouseProduct.objects.filter(company=company)
-        serializer = WarehouseProductSerializer(products, many=True)
+        if user.is_owner:
+            company = Company.objects.get(company_owner = request.user, pk = company_id)
+        if user.is_employee:
+            company = user.company
+        data = request.data
+        data['company'] = company.pk
+        data['receiver_staff'] = request.user.pk
+        serializer = self.serializer_class(data = data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status = status.HTTP_201_CREATED)
+    
+    def retrieve(self,  request, pk = None, company_id=None):
+        queryset = self.get_queryset()
+        warehouseProduct = get_object_or_404(queryset, pk = pk)
+        serializer = self.serializer_class(warehouseProduct)
         return Response(serializer.data)
-
-    def post(self, request, company_id):
-        user = request.user
-        
-        company = Company.objects.get(pk = int(company_id))
-        
-        if user.is_admin and (company.company_owner.id != user.id):
-            return Response({
-                "error": "You don't have permission for this company"
-            }, status = status.HTTP_403_FORBIDDEN)
-        elif user.is_employee and not (CompanyEmployee.objects.filter(companyid = int(company_id), employeeid = int(user.id)).exists()):
-            return Response({
-                "error": "You don't have permission for this company"
-            }, status = status.HTTP_403_FORBIDDEN)
-            
-        request.data['company'] = company_id
-        serializer = WarehouseProductSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class WarehouseProductRetrieveUpdateDeleteView(APIView):
-    def get(self, request, company_id, warehouse_product_id):
-        user = request.user
-        
-        company = Company.objects.get(pk = int(company_id))
-        if user.is_admin and (company.company_owner.id != user.id):
-            return Response({
-                "error": "You don't have permission for this company"
-            }, status = status.HTTP_403_FORBIDDEN)
-        elif user.is_employee and not (CompanyEmployee.objects.filter(companyid = int(company_id), employeeid = int(user.id)).exists()):
-            return Response({
-                "error": "You don't have permission for this company"
-            }, status = status.HTTP_403_FORBIDDEN)
-        if not WarehouseProduct.objects.filter(pk = warehouse_product_id).exists():
-            return Response({
-            "error": "Such product does not exist"
-            }, status = status.HTTP_400_BAD_REQUEST)
-            
-        warehouse_product = WarehouseProduct.objects.get(company=company_id, pk=warehouse_product_id)
-        serializer = WarehouseProductSerializer(warehouse_product)
+    
+    def partial_update(self, request, pk = None, company_id=None):
+        queryset = self.get_queryset()
+        warehouseProduct = get_object_or_404(queryset, pk = pk)
+        serializer = self.serializer_class(warehouseProduct, data = request.data, partial = True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
         return Response(serializer.data)
-
-    def patch(self, request, company_id, warehouse_product_id):
-        user = request.user
-        
-        company = Company.objects.get(pk = int(company_id))
-        
-        if user.is_admin and (company.company_owner.id != user.id):
-            return Response({
-                "error": "You don't have permission for this company"
-            }, status = status.HTTP_403_FORBIDDEN)
-        elif user.is_employee and not (CompanyEmployee.objects.filter(companyid = int(company_id), employeeid = int(user.id)).exists()):
-            return Response({
-                "error": "You don't have permission for this company"
-            }, status = status.HTTP_403_FORBIDDEN)
-        
-        if not WarehouseProduct.objects.filter(pk = warehouse_product_id).exists():
-            return Response({
-                "error": "Such product does not exist"
-            }, status = status.HTTP_400_BAD_REQUEST)
-        
-        warehouse_product = WarehouseProduct.objects.get(company=company_id, pk=warehouse_product_id)
-        serializer = WarehouseProductSerializer(warehouse_product, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        else:
-            # Creating dict with errors, keys are field names, values are error messages
-            errors = {}
-            for field, error_detail in serializer.errors.items():
-                errors[field] = error_detail[0]
-                
-            return Response({
-                    "error": errors
-                }, status = status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, company_id, warehouse_product_id):
-        user = request.user
-        company = Company.objects.get(pk = int(company_id))
-        
-        if user.is_admin and (company.company_owner.id != user.id):
-            return Response({
-                "error": "You don't have permission for this company"
-            }, status = status.HTTP_403_FORBIDDEN)
-        elif user.is_employee and not (CompanyEmployee.objects.filter(companyid = int(company_id), employeeid = int(user.id)).exists()):
-            return Response({
-                "error": "You don't have permission for this company"
-            }, status = status.HTTP_403_FORBIDDEN)
-            
-        if not WarehouseProduct.objects.filter(pk = warehouse_product_id).exists():
-            return Response({
-                "error": "Such product does not exist"
-            }, status = status.HTTP_400_BAD_REQUEST)
-        
-        warehouse_product = WarehouseProduct.objects.get(company=company_id, pk=warehouse_product_id)
-        warehouse_product.delete()
+    
+    def destroy(self, request, pk = None, company_id=None):
+        queryset = self.get_queryset()
+        warehouseProduct = get_object_or_404(queryset, pk = pk)
+        self.perform_destroy(warehouseProduct)
         return Response(status=status.HTTP_204_NO_CONTENT)
-
+    
 
 class WarehouseSummaryView(APIView):
     permission_classes = (permission.EmployeeLevelPermission,)
     def get(self, request, company_id):
         user = request.user
         
-        company = Company.objects.get(pk = company_id)
+        if user.is_owner:
+            company = get_object_or_404(Company, pk = company_id, company_owner = user)
+        elif user.is_employee and company_id == user.company:
+            company = user.company
+        else:
+            PermissionDenied("You have no permission to access this company")
+            
+        warehouse_products = WarehouseProduct.objects.filter(company=company)
         
-        if user.is_admin and (company.company_owner.id != user.id):
-            return Response({
-                "error": "You don't have permission for this company"
-            }, status = status.HTTP_403_FORBIDDEN)
-        elif user.is_employee and not (CompanyEmployee.objects.filter(companyid = int(company_id), employeeid = int(user.id)).exists()):
-            return Response({
-                "error": "You don't have permission for this company"
-            }, status = status.HTTP_403_FORBIDDEN)  
+        total_quantity = warehouse_products.count()
         
-        total_quantity = WarehouseProduct.objects.filter(company=company_id).count()
-        current_sum = WarehouseProduct.objects.filter(
-            company=company_id, status=WarehouseProduct.Status.AVAILABLE
+        current_sum = warehouse_products.filter(
+            status=WarehouseProduct.Status.AVAILABLE
         ).aggregate(models.Sum('total_price'))['total_price__sum']
-        total_sum = WarehouseProduct.objects.filter(company=company_id).aggregate(models.Sum('total_price'))['total_price__sum']
+        
+        total_sum = warehouse_products.aggregate(models.Sum('total_price'))['total_price__sum']
 
         return Response({
             'total_quantity': total_quantity,

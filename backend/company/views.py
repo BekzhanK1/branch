@@ -1,78 +1,64 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, viewsets
+from rest_framework.exceptions import PermissionDenied
+from django.shortcuts import get_object_or_404
 from .models import Company, Catalog, Product, CompanyEmployee
 from .serializers import CompanySerializer, CatalogSerializer, ProductSerializer
 from permissions import permission
 
-class CompanyListCreateView(APIView):
+
+class CompanyViewSet(viewsets.ModelViewSet):
+    permission_classes = (permission.EmployeeLevelPermission, )
+    serializer_class = CompanySerializer
     
-    permission_classes = (permission.AdminLevelPermission, )
-    
-    def get(self, request):
-        companies = Company.objects.all()
-        serializer = CompanySerializer(companies, many=True)
-        return Response(serializer.data)
-
-    def post(self, request):
-        user = request.user
-
-        data = request.data
-        data['company_owner'] = user.pk
-        serializer = CompanySerializer(data=data)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class CompanyRetrieveUpdateDeleteView(APIView):
-    
-    permission_classes = (permission.AdminLevelPermission, )
-    
-    def get(self, request, company_id):
-        user = request.user
-
-        company = Company.objects.get(pk = int(company_id))
+    def get_queryset(self):
+        user = self.request.user
         
-        if company.company_owner.id != user.id:
-            return Response({
-                "error": "You don't have permission for this company"
-            }, status = status.HTTP_403_FORBIDDEN)
+        if user.is_owner:
+            return Company.objects.filter(company_owner = user)
+        elif user.is_employee == user.company:
+            return Company.objects.filter(company = user.company)
+        else:
+            PermissionDenied("You don't have permission for this company")
             
-        serializer = CompanySerializer(company)
+    def list(self, request):
+        serializer = self.serializer_class(self.get_queryset(), many = True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def create(self, request):
+        if not request.user.is_owner:
+            PermissionDenied("You don't have permission")
+        
+        data = request.data
+        data['company_owner'] = request.user.pk
+        serializer = self.serializer_class(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    def retrieve(self, request, pk = None):
+        company = get_object_or_404(self.get_queryset(), pk = pk)
+        serializer = self.serializer_class(company)
         return Response(serializer.data)
     
-    def patch(self, request, company_id):
-        user = request.user
-
-        company = Company.objects.get(pk = int(company_id))
+    def partial_update(self, request, pk = None):
+        if not request.user.is_owner:
+            PermissionDenied("You don't have permission")
         
-        if company.company_owner.id != user.id:
-            return Response({
-                "error": "You don't have permission for this company"
-            }, status = status.HTTP_403_FORBIDDEN)
+        company = get_object_or_404(self.get_queryset(), pk = pk)
+        serializer = self.serializer_class(company, data = request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+    
+    def destroy(self, request, pk = None):
+        if not request.user.is_owner:
+            PermissionDenied("You don't have permission")
         
-        serializer = CompanySerializer(
-            company, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request, company_id):
-        user = request.user
-
-        company = Company.objects.get(pk=id)
-        
-        if company.company_owner.id != user.id:
-            return Response({
-                "error": "You don't have permission for this company"
-            }, status = status.HTTP_403_FORBIDDEN)
-        
-        company.delete()
-        return Response(status=status.HTTP_200_OK)
+        company = get_object_or_404(self.get_queryset(), pk = pk)
+        self.perform_destroy(company)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ProductListCreateView(APIView):

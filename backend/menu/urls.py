@@ -1,11 +1,13 @@
-from django.urls import path
+from django.urls import path, include
 
 from .views import *
+from rest_framework import routers
+
+router = routers.DefaultRouter()
+router.register(r'menu', MenuItemViewSet, basename='menu')
+router.register(r'categories', CategoryViewSet, basename='categories')
 
 app_name = 'menu'
 urlpatterns = [
-    path('<int:company_id>/menu_items', MenuItemListCreateView.as_view()),
-    path('<int:company_id>/menu_items/<int:menu_item_id>', MenuItemRetrieveUpdateDeleteView.as_view()),
-    path('<int:company_id>/categories', CategoryListCreateView.as_view()),
-    path('<int:company_id>/categories/<int:category_id>', CategorygRetrieveUpdateDeleteView.as_view()),
+    path('<int:company_id>/', include(router.urls)),
 ]

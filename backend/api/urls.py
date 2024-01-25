@@ -22,9 +22,9 @@ urlpatterns = [
     path('reset-password-admin', account_views.AdminResetPasswordView.as_view()),
     path('reset/<uidb64>/<token>', SetNewPasswordAdmin.as_view(), name="reset"),
 
-    path('warehouse/', include('warehouse.urls')),
-    path('company/', include('company.urls')),
-    path('menu/', include('menu.urls')),
+    path('company/', include('warehouse.urls')),
+    path('', include('company.urls')),
+    path('company/', include('menu.urls')),
     path('', include('customer.urls')),
     
 ]
