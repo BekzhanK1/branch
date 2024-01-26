@@ -30,6 +30,9 @@ ALLOWED_HOSTS = ["*"]
 
 SITE_URL = "localhost"
 
+# Items per page in paginator
+ITEMS_PER_PAGE = 10
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -41,6 +44,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     'corsheaders',
     'rest_framework',
+    'django_filters',
     'account',
     'myproject',
     'api',
@@ -92,6 +96,13 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379",
     }
 }
 
@@ -151,6 +162,9 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.JSONParser',
         # Add other parsers if needed
     ],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend'
+        ],
 }
 
 SIMPLE_JWT = {

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import render
 
 # Create your views here.
@@ -6,6 +7,8 @@ from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django_filters import rest_framework as filters
 from django.db import models
 from company.models import Company
 
@@ -14,9 +17,23 @@ from .models import WarehouseProduct
 from .serializers import WarehouseProductSerializer
 
 
+class WarehouseProductFilter(filters.FilterSet):
+    name = filters.CharFilter(lookup_expr='icontains')
+    status = filters.ChoiceFilter(choices=WarehouseProduct.Status.choices)
+    quantity = filters.NumberFilter(field_name='quantity', lookup_expr='gte')
+    price_per_unit = filters.RangeFilter()
+    total_price = filters.RangeFilter()
+
+    class Meta:
+        model = WarehouseProduct
+        fields = ['name', 'status', 'quantity', 'price_per_unit', 'total_price']
+    
+
+
 class WarehouseProductViewSet(viewsets.ModelViewSet):
     permission_classes = (permission.EmployeeLevelPermission, )
     serializer_class = WarehouseProductSerializer
+    filterset_class = WarehouseProductFilter
     
     def get_queryset(self):
         user = self.request.user
@@ -33,8 +50,27 @@ class WarehouseProductViewSet(viewsets.ModelViewSet):
 
     def list(self, request, company_id=None):
         queryset = self.get_queryset()
-        serializer = self.serializer_class(queryset, many = True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        queryset = self.filter_queryset(queryset)
+        paginator = Paginator(queryset, settings.ITEMS_PER_PAGE)
+        page = request.GET.get('page')
+        try:
+            warehouse_products = paginator.page(page)
+        except PageNotAnInteger:
+            warehouse_products = paginator.page(1)
+        except EmptyPage:
+            warehouse_products = paginator.page(paginator.num_pages)
+        serializer = self.serializer_class(warehouse_products, many=True)
+        return Response({
+            'data': serializer.data,
+            'pagination': {
+                'page': warehouse_products.number,
+                'pages': paginator.num_pages,
+                'has_previous': warehouse_products.has_previous(),
+                'has_next': warehouse_products.has_next(),
+                'next_page': warehouse_products.next_page_number() if warehouse_products.has_next() else None,
+                'previous_page': warehouse_products.previous_page_number() if warehouse_products.has_previous() else None,
+                }
+            })
     
     def create(self, request, company_id=None):
         user = request.user
