@@ -27,7 +27,10 @@ class WarehouseProductViewSet(viewsets.ModelViewSet):
             return WarehouseProduct.objects.filter(company = company)
         elif user.is_employee and company_id == user.company:
             return WarehouseProduct.objects.filter(company = user.company)
-    
+        else:
+            PermissionDenied("You have no permission to access this company")
+
+
     def list(self, request, company_id=None):
         queryset = self.get_queryset()
         serializer = self.serializer_class(queryset, many = True)
@@ -36,7 +39,7 @@ class WarehouseProductViewSet(viewsets.ModelViewSet):
     def create(self, request, company_id=None):
         user = request.user
         if user.is_owner:
-            company = Company.objects.get(company_owner = request.user, pk = company_id)
+            company = get_object_or_404(Company, company_owner = user, pk = company_id)
         if user.is_employee:
             company = user.company
         data = request.data

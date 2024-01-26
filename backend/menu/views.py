@@ -34,7 +34,7 @@ class MenuItemViewSet(viewsets.ModelViewSet):
     def create(self, request, company_id = None):
         user = request.user
         if user.is_owner:
-            company = Company.objects.get(company_owner = request.user, pk = company_id)
+            company = get_object_or_404(Company, company_owner = user, pk = company_id)
         if user.is_employee:
             company = user.company
         data = request.data
@@ -90,7 +90,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
     def create(self, request, company_id = None):
         user = request.user
         if user.is_owner:
-            company = Company.objects.get(company_owner = request.user, pk = company_id)
+            company = get_object_or_404(Company, company_owner = user, pk = company_id)
         if user.is_employee:
             company = user.company
         data = request.data

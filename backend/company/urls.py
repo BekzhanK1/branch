@@ -5,10 +5,16 @@ from rest_framework import routers
 
 router = routers.DefaultRouter()
 router.register(r'companies', CompanyViewSet, basename='companies')
+router_product_catalog = routers.DefaultRouter()
+
+router_product_catalog.register(r'products', ProductViewSet, basename='products')
+router_product_catalog.register(r'catalogs', CatalogViewSet, basename='catalogs')
+
 
 app_name = 'company'
 urlpatterns = [
     path('', include(router.urls)),
+    path('company/<int:company_id>/', include(router_product_catalog.urls)),
     
     # path('', CompanyListCreateView.as_view()),
     # path('<int:company_id>', CompanyRetrieveUpdateDeleteView.as_view()),
