@@ -1,6 +1,7 @@
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework import status, permissions
+from permissions import permission
 from django.shortcuts import get_object_or_404
 from .models import Customer, Attendance
 from .serializers import CustomerSerializer, AttendanceSerializer

@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils.timezone import now
+from customer.models import Customer
+from menu.models import MenuItem
 
 User = get_user_model()
 
@@ -55,3 +57,24 @@ class Product(models.Model):
     def __str__(self):
         return self.name
     
+
+class Order(models.Model):
+    customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    items = models.ManyToManyField(MenuItem, through='OrderItem')
+    order_time = models.DateTimeField(auto_now_add=True)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+
+    company = models.ForeignKey(Company, on_delete=models.CASCADE)
+
+
+    def __str__(self):
+        return f"Order #{self.id} - {self.customer.user.first_name} {self.customer.user.last_name}"
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    menu_item = models.ForeignKey(MenuItem, on_delete=models.CASCADE, related_name='menu_item')
+    quantity = models.PositiveIntegerField()
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.menu_item.name} - {self.quantity} units"

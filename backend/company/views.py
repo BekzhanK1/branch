@@ -1,10 +1,10 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, permissions
 from rest_framework.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
-from .models import Company, Catalog, Product
-from .serializers import CompanySerializer, CatalogSerializer, ProductSerializer
+from .models import Company, Catalog, Product, Order
+from .serializers import CompanySerializer, CatalogSerializer, ProductSerializer, OrderSerializer
 from permissions import permission
 
 
@@ -172,4 +172,36 @@ class CatalogViewSet(viewsets.ModelViewSet):
         self.perform_destroy(catalog)
         return Response(status=status.HTTP_204_NO_CONTENT)           
     
+
+class OrderViewSet(viewsets.ModelViewSet):
+    permission_classes = (permissions.AllowAny, )
+    serializer_class = OrderSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        company_id = self.kwargs.get('company_id')
         
+        if user.is_owner:
+            company = get_object_or_404(Company, pk = company_id, company_owner = user)
+            return Order.objects.filter(company = company)
+        elif user.is_employee and company_id == user.company:
+            return Order.objects.filter(company = user.company)
+        else:
+            PermissionDenied("You have no permission to access this company")
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.serializer_class(queryset, many=True)
+        print(serializer)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=201, headers=headers)
+
+    def perform_create(self, serializer):
+        # Perform any additional logic before creating the order
+        serializer.save()

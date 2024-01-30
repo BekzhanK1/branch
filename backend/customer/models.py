@@ -1,5 +1,4 @@
 from django.db import models
-from company.models import Company
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -17,8 +16,6 @@ class Customer(models.Model):
     status = models.CharField(max_length=55, choices=CustomerStatus.choices)
     first_visit = models.DateField(auto_now_add=True)
     last_visit = models.DateField(auto_now=True)
-
-    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='customer')
 
     def __str__(self) -> str:
         return f"{self.user.first_name} {self.user.last_name} - {self.status}"
