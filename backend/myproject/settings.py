@@ -33,6 +33,9 @@ SITE_URL = "localhost"
 # Items per page in paginator
 ITEMS_PER_PAGE = 10
 
+# Number of visits in order to be "ACTIVE_CLIENT"
+ACTIVE_CLIENT_VISITS = 10
+
 # Application definition
 
 INSTALLED_APPS = [

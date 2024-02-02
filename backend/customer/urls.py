@@ -9,5 +9,5 @@ router.register(r'attendance', AttendanceViewSet, basename='attendance')
 
 app_name = 'customer'
 urlpatterns = [
-    path('', include(router.urls)),
+    path('company/<int:company_id>/', include(router.urls)),
 ]

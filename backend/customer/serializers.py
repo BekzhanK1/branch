@@ -14,11 +14,10 @@ class CustomerSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
 
         user_email = validated_data.pop('user', None)
-        company_id = validated_data.pop('company', None)
 
         user_instance= User.objects.get(email=user_email)
 
-        customer_instance = Customer.objects.create(user=user_instance, company=company_id, **validated_data)
+        customer_instance = Customer.objects.create(user=user_instance, **validated_data)
 
         return customer_instance
 

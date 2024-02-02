@@ -1,9 +1,11 @@
+from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets, permissions
 from rest_framework.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from .models import Company, Catalog, Product, Order
+from customer.models import Attendance, Customer
 from .serializers import CompanySerializer, CatalogSerializer, ProductSerializer, OrderSerializer
 from permissions import permission
 
@@ -209,3 +211,24 @@ class OrderViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # Perform any additional logic before creating the order
         serializer.save()
+
+        customer = serializer.validated_data['customer']
+        company = serializer.validated_data['company']
+        order_time = serializer.validated_data['order_time']
+        
+        attendance = Attendance.objects.create(
+            customer = customer,
+            company = company,
+            check_in_time = order_time
+        )
+        
+        self.check_for_activity(customer)
+        
+    def check_for_activity(customer):
+        number_of_visits = Attendance.objects.filter(customer = customer).count()
+        if number_of_visits > settings.ACTIVE_CLIENT_VISITS:
+            customer.status = Customer.CustomerStatus.ACTIVE_CLIENT
+            customer.save()
+            
+        
+    
