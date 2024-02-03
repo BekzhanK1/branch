@@ -8,8 +8,8 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Count, Sum, Avg
 from .models import Company, Catalog, Product, Order
 from customer.models import Attendance, Customer
-from account.models import EmployeeUser
-from account.serializers import EmployeeUserSerializer
+from account.models import EmployeeUser, EmployeePosition
+from account.serializers import EmployeeUserSerializer, EmployeePositionSerializer
 from .serializers import CompanySerializer, CatalogSerializer, ProductSerializer, OrderSerializer
 from permissions import permission
 
@@ -53,7 +53,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
             PermissionDenied("You don't have permission")
 
         company = get_object_or_404(self.get_queryset(), pk=pk)
-        serializer = self.serializer_class(company, data=request.data)
+        serializer = self.serializer_class(company, data=request.data, partial = True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
         return Response(serializer.data)
@@ -290,6 +290,52 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         return Response(analysis_data)
         
         
-
+class EmployeePositionViewSet(viewsets.ModelViewSet):
+    permission_classes = (permission.AdminLevelPermission, )
+    serializer_class = EmployeePositionSerializer
+    
+    def get_queryset(self):
+        user = self.request.user
+        company_id = self.kwargs.get('company_id')
+        if user.is_owner:
+            company = get_object_or_404(
+                Company, pk=company_id, company_owner=user)
+            return EmployeePosition.objects.filter(company = company)
+        else:
+            PermissionDenied("You have no permission to access this company")
+        
+    def list(self, request, company_id = None):
+        serializer = self.serializer_class(self.get_queryset(), many = True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    
+    def create(self, request, company_id=None):
+        user = request.user
+        if user.is_owner:
+            company = get_object_or_404(
+                Company, company_owner=user, pk=company_id)
+        data = request.data
+        data['company'] = company.pk
+        serializer = self.serializer_class(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    def retrieve(self, request, pk = None, company_id = None):
+        emp_position = get_object_or_404(self.get_queryset(), pk = pk)
+        serializer = self.serializer_class(emp_position)
+        Response(serializer.data)
+        
+    def partial_update(self, request, pk = None, company_id = None):
+        emp_position = get_object_or_404(self.get_queryset(), pk = pk)
+        serializer = self.serializer_class(emp_position, data = request.data, partial = True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+    
+    def destroy(self, request, *args, **kwargs):
+        emp_position = self.queryset()
+        self.perform_destroy(emp_position)
+        return Response(status = status.HTTP_204_NO_CONTENT)
         
     

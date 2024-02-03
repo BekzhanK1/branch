@@ -11,6 +11,7 @@ company_router.register(r'products', ProductViewSet, basename='products')
 company_router.register(r'catalogs', CatalogViewSet, basename='catalogs')
 company_router.register(r'employees', EmployeeViewSet, basename='employees')
 company_router.register(r'orders', OrderViewSet, basename='orders')
+company_router.register(r'positions', EmployeePositionViewSet, basename='positions')
 
 app_name = 'company'
 urlpatterns = [
