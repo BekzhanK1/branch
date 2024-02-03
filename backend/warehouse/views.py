@@ -5,6 +5,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
@@ -106,21 +107,9 @@ class WarehouseProductViewSet(viewsets.ModelViewSet):
         self.perform_destroy(warehouseProduct)
         return Response(status=status.HTTP_204_NO_CONTENT)
     
-
-class WarehouseSummaryView(APIView):
-    permission_classes = (permission.EmployeeLevelPermission,)
-    def get(self, request, company_id):
-        user = request.user
-        
-        if user.is_owner:
-            company = get_object_or_404(Company, pk = company_id, company_owner = user)
-        elif user.is_employee and company_id == user.company:
-            company = user.company
-        else:
-            PermissionDenied("You have no permission to access this company")
-            
-        warehouse_products = WarehouseProduct.objects.filter(company=company)
-        
+    @action(detail = False, methods = ['get'])
+    def summary(self, request, company_id = None):
+        warehouse_products = self.get_queryset()
         total_quantity = warehouse_products.count()
         
         current_sum = warehouse_products.filter(
@@ -134,3 +123,4 @@ class WarehouseSummaryView(APIView):
             'current_sum': current_sum or 0,
             'total_sum': total_sum or 0,
         })
+        

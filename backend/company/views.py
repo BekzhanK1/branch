@@ -3,9 +3,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, viewsets, permissions
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
+from django.db.models import Count, Sum, Avg
 from .models import Company, Catalog, Product, Order
 from customer.models import Attendance, Customer
+from account.models import EmployeeUser
+from account.serializers import EmployeeUserSerializer
 from .serializers import CompanySerializer, CatalogSerializer, ProductSerializer, OrderSerializer
 from permissions import permission
 
@@ -230,5 +234,62 @@ class OrderViewSet(viewsets.ModelViewSet):
             customer.status = Customer.CustomerStatus.ACTIVE_CLIENT
             customer.save()
             
+            
+class EmployeeViewSet(viewsets.ModelViewSet):
+    permission_classes = (permission.AdminLevelPermission, )
+    serializer_class = EmployeeUserSerializer
+    
+    def get_queryset(self):
+        user = self.request.user
+        company_id = self.kwargs.get('company_id')
+        if user.is_owner:
+            company = get_object_or_404(
+                Company, pk=company_id, company_owner=user)
+            return EmployeeUser.objects.filter(company = company)
+        else:
+            PermissionDenied("You have no permission to access this company")
+    
+    def list(self, request, company_id = None):
+        serializer = self.serializer_class(self.get_queryset(), many = True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def retrieve(self, request, pk = None, company_id = None):
+        employee = get_object_or_404(self.get_queryset(), pk = pk)
+        serializer = self.serializer_class(employee)
+        return Response(serializer.data)
+    
+    def partial_update(self, request, pk = None, company_id = None):
+        employee = get_object_or_404(self.get_queryset(), pk = pk)
+        serializer = self.serializer_class(employee, data = request.data, partial = True)
+        
+        allowed_fields = ['position', 'salary']
+        for field in request.data.keys():
+            if field not in allowed_fields:
+                serializer.validated_data.pop(field, None)
+
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+    
+    def destroy(self, request, pk = None, company_id = None):
+        employee = get_object_or_404(self.get_queryset(), pk = pk)
+        self.perform_destroy(employee)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    @action(detail = False, methods=['get'])
+    def analysis(self, request, company_id = None):
+        
+        employees = self.get_queryset()
+        
+        analysis_data = employees.aggregate(
+                number_of_employees=Count('id'),
+                total_salary=Sum('salary'),
+                average_salary=Avg('salary')
+        )
+
+        return Response(analysis_data)
+        
+        
+
         
     
