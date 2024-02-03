@@ -102,29 +102,42 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     def analysis(self, request, company_id=None):
         attendances = self.get_queryset()
 
-        # Get the start and end date for the past week
-        end_date = timezone.now().date()
-        print(timezone.now())
-        start_date = end_date - timedelta(days=7)
+        current_date = timezone.now().date()
+        day_difference = current_date.weekday()
 
-        # Calculate the total number of visits
-        total_visits = attendances.count()
+        start_date_current_week = current_date - timedelta(days=day_difference)
+        end_date_current_week = start_date_current_week + timedelta(days=6)
 
-        # Calculate the number of visits within the past week
-        date_range_visits_count = attendances.filter(check_in_time__range=(start_date, end_date)).count()
+        start_date_previous_week = start_date_current_week - timedelta(days=7)
+        end_date_previous_week = start_date_previous_week + timedelta(days=6)
 
-        # Calculate the percentage change over the week
-        if total_visits == 0:
+        format_str = '%Y-%m-%d'
+        start_date_current_week_str = start_date_current_week.strftime(format_str)
+        end_date_current_week_str = end_date_current_week.strftime(format_str)
+        start_date_previous_week_str = start_date_previous_week.strftime(format_str)
+        end_date_previous_week_str = end_date_previous_week.strftime(format_str)
+
+        total_visits_current_week = attendances.filter(
+            check_in_time__range=(start_date_current_week, end_date_current_week)
+        ).count()
+
+        total_visits_previous_week = attendances.filter(
+            check_in_time__range=(start_date_previous_week, end_date_previous_week)
+        ).count()
+
+        if total_visits_previous_week == 0:
             percentage_change = 100
         else:
-            percentage_change = ((date_range_visits_count - total_visits) / total_visits) * 100
+            percentage_change = ((total_visits_current_week - total_visits_previous_week) / total_visits_previous_week) * 100
 
         analysis_data = {
-            'total_visits': total_visits,
-            'date_range_visits_count': date_range_visits_count,
+            'total_visits_current_week': total_visits_current_week,
+            'total_visits_previous_week': total_visits_previous_week,
             'percentage_change': percentage_change,
-            'start_date': start_date,
-            'end_date': end_date,
+            'start_date_current_week': start_date_current_week_str,
+            'end_date_current_week': end_date_current_week_str,
+            'start_date_previous_week': start_date_previous_week_str,
+            'end_date_previous_week': end_date_previous_week_str,
         }
 
         return Response(analysis_data)
