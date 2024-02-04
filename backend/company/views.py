@@ -206,6 +206,12 @@ class OrderViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def create(self, request, *args, **kwargs):
+        company_id = kwargs.get("company_id")
+        
+        request.data.update({
+            "company_id": company_id
+        })
+        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
@@ -216,19 +222,20 @@ class OrderViewSet(viewsets.ModelViewSet):
         # Perform any additional logic before creating the order
         serializer.save()
 
-        customer = serializer.validated_data['customer']
-        company = serializer.validated_data['company']
-        order_time = serializer.validated_data['order_time']
+        customer_id = serializer.data['customer']
+        company_id = serializer.data['company']['id']
+        order_time = serializer.data['order_time']
         
         attendance = Attendance.objects.create(
-            customer = customer,
-            company = company,
+            customer_id = customer_id,
+            company_id = company_id,
             check_in_time = order_time
         )
         
+        customer = Customer.objects.get(pk = customer_id)
         self.check_for_activity(customer)
         
-    def check_for_activity(customer):
+    def check_for_activity(self, customer):
         number_of_visits = Attendance.objects.filter(customer = customer).count()
         if number_of_visits > settings.ACTIVE_CLIENT_VISITS:
             customer.status = Customer.CustomerStatus.ACTIVE_CLIENT

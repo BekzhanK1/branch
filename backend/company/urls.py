@@ -4,14 +4,14 @@ from company.views import *
 from rest_framework import routers
 
 router = routers.DefaultRouter()
-router.register(r'companies', CompanyViewSet, basename='companies')
+router.register(r'company', CompanyViewSet, basename='company')
 
 company_router = routers.DefaultRouter()
-company_router.register(r'products', ProductViewSet, basename='products')
-company_router.register(r'catalogs', CatalogViewSet, basename='catalogs')
-company_router.register(r'employees', EmployeeViewSet, basename='employees')
-company_router.register(r'orders', OrderViewSet, basename='orders')
-company_router.register(r'positions', EmployeePositionViewSet, basename='positions')
+company_router.register(r'product', ProductViewSet, basename='product')
+company_router.register(r'catalog', CatalogViewSet, basename='catalog')
+company_router.register(r'employee', EmployeeViewSet, basename='employee')
+company_router.register(r'order', OrderViewSet, basename='orders')
+company_router.register(r'position', EmployeePositionViewSet, basename='position')
 
 app_name = 'company'
 urlpatterns = [
