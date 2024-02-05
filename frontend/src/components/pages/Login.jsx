@@ -3,24 +3,33 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
 import { url } from "../../../config/config";
-
+import { useDispatch } from "react-redux";
+import { authActions } from "../store/store";
 function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
 
+  const dispatch = useDispatch()
+
+  const toggleAuth = () => {
+    dispatch(authActions.login())
+  }
   const handleLogin = (e) => {
     e.preventDefault();
     axios
-      .post(`${url}/api/login`, {
+      .post(`http://127.0.0.1/api/login`, {
         email: email,
         password: password,
       })
       .then((response) => {
         const token = response.data.access; // access and refresh tokens === jwt
         axios.defaults.headers.common["Authorization"] = `Bearer ${token}`; //bearer !== jwt bearer === another authorization method.
+        console.log(axios.defaults.headers.common)
         navigate("/panel");
+        toggleAuth();
+        localStorage.setItem('token',token);
       })
       .catch((error) => {
         switch (error.response ? error.response.status : null) {
@@ -51,7 +60,7 @@ function Login() {
 
   return (
     <>
-      <section className="bg-gray-50 h-screen w-screen" id="body">
+      <section className="bg-gray-50 h-screen flex-1" id="body">
         <div className="mx-auto flex flex-col items-center justify-center px-6 py-8 md:h-screen lg:py-0">
           <a
             href="#"
