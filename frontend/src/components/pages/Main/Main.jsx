@@ -1,18 +1,16 @@
 import React from 'react'
-import Head from '../Storage/Head'
+import Head from '../../bars/Head'
 import Analytics from './Analytics'
 import Sidebar from '../../bars/Sidebar'
 import { useState } from 'react'
+import { Outlet } from 'react-router'
 const Main = () => {
   const [currentState, setCurrentState] = useState('Analytics')
   return (
-    <div className='bg-[#DDE1E6] h-full w-full text-[#21272A] flex'>
-        <Sidebar></Sidebar>
-        <div className='w-full h-full p-[24px]'>
-          <Head title='Main Page' sections={['Cell','Cell','Analytics','Cell']}></Head>
-          <div className='w-fit h-fit'>
-              {currentState==='Analytics' && <Analytics/>}
-          </div>
+    <div className='bg-[#DDE1E6] h-full flex-1 text-[#21272A] flex'>
+        <div className=' h-full p-[24px] box-border flex-1'>
+          <Head title='Main Page' sections={[{title:'Cell', id:1, path: 'cell1'},{title: 'Cell',id:2,path:'cell2'},{title:'Analytics',id:3,path:'analytics'},{title:'Cell',id:4,path:'cell4'}]}></Head>
+          <Outlet/>
         </div>
     </div>
   )

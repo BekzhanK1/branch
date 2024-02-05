@@ -1,5 +1,5 @@
 import React from 'react'
-
+import { NavLink } from 'react-router-dom'
 const Head = ({title, sections}) => {
   return (
     <header className='mb-[1rem]'>
@@ -7,7 +7,7 @@ const Head = ({title, sections}) => {
       <div className='flex justify-between items-center'>
         <ul type='none' className='flex gap-8 font-semibold'>
           {sections.map(section=>
-            <li className='text-[#697077] px-4'>{section}</li>
+            <li key={section.id} className='text-[#697077] px-4'><NavLink to={section.path}>{section.title}</NavLink></li>
           )}
         </ul>
 

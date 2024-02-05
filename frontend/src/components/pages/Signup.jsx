@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 // import { url } from "../../../config/config";
-// import axios from "axios";
-// import { useNavigate } from "react-router-dom";
-
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import {Link} from 'react-router-dom'
+import { useDispatch } from "react-redux";
+import { authActions } from "../store/store";
 function Signup() {
-  //   const navigate = useNavigate();
+  const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [passwordPassed, setPasswordPassed] = useState(0);
   const [firstName, setFirstName] = useState("");
@@ -12,6 +14,9 @@ function Signup() {
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const dispatch = useDispatch()
 
   function isGood(password) {
     const regex = ["[A-Z]", "[a-z]", "[0-9]", "[$@$!%*#?&]"];
@@ -72,45 +77,50 @@ function Signup() {
     if (password == "") setPasswordPassed(0);
   }, [password]);
   /* eslint-diable */
+
+  const authHandler = () => {
+    dispatch(authActions.login())
+  }
   const handleSubmit = (e) => {
-    // e.preventDefault();
+    e.preventDefault();
     console.log("email", email);
     console.log("password", password);
     console.log("firstName", firstName);
     console.log("secondName", secondName);
 
-    async function makeRequest() {
-      console.log("request in process...");
+    const authData = {
+      email: email,
+      password: password,
+      first_name: firstName,
+      last_name: secondName,
+      phonenumber: phoneNumber
     }
 
-    if (password !== "" && confirmPassword !== "" && passwordPassed >= 3) {
-      makeRequest().then(() => {
-        console.log("request is done.");
+    async function makeRequest() {
+      return axios.post('http://127.0.0.1/api/register-owner', authData)
+      .then((response) => {
+        const token = response.data.access;
+        localStorage.setItem('token', token);
+        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+        navigate("/panel");
+      })
+      .catch((error) => {
+        setError('Such email already exists');
+        console.error("Error. Please contact administrator");
       });
     }
 
-    //   axios
-    //     .post(`${url}/api/register-admin`, {
-    //       email: email,
-    //       first_name: firstName,
-    //       last_name: secondName,
-    //       phonenumber: phoneNumber,
-    //       password: password,
-    //     })
-    //     .then((response) => {
-    //       const token = response.data.access;
-    //       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-    //       navigate("/panel");
-    //     })
-    //     .catch((error) => {
-    //       setError(error);
-    //       console.error("Error. Please contact administrator");
-    //     });
+    if (password !== "" && confirmPassword !== "" && passwordPassed >= 3) {
+      const data = makeRequest();
+      authHandler()
+      console.log(data);
+    }
+
   };
 
   return (
     <>
-      <section className="bg-gray-50 h-screen w-screen text-left" id="body">
+      <section className="bg-gray-50 h-screen flex-1 text-left" id="body">
         <div className="mx-auto flex flex-col items-center justify-center px-6 py-8 md:h-screen lg:py-0">
           <a
             href="#"
@@ -259,7 +269,7 @@ function Signup() {
                     </div>
                   </div>
                 </div>
-
+                {error && <p className="text-[red] text-center">{error}!</p>}
                 <button
                   type="submit"
                   className="dark:hover:bg-primary-700 w-full rounded-lg bg-gray-900 px-5 py-2.5 text-center text-sm font-medium text-white hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-300"
@@ -268,6 +278,16 @@ function Signup() {
                   {console.log("passwordPassed", passwordPassed)}
                   Sign up
                 </button>
+
+                <p className="text-sm font-light text-right text-gray-500">
+                  Already have an account? <br />
+                  <Link
+                    to="/login"
+                    className="text-primary-600 font-medium hover:underline"
+                  >
+                    Log In
+                  </Link>
+                </p>
               </form>
             </div>
           </div>
